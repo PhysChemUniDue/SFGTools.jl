@@ -9,3 +9,5 @@ for (root, dirs, files) in walkdir(".")
         close(f)
     end
 end
+
+replace(str, r"asdf (?<x>\d*\.?\d*)", s"fdsa\t\1")
