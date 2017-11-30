@@ -1,4 +1,5 @@
 using FileIO
+using DataFrames
 
 """
 List available spectra.
@@ -97,9 +98,35 @@ end
 function load_spectrum(df::DataFrame, id::AbstractArray)
   sfspectra = SFSpectrum[]
   for i in id
-    # sfspectrum = load_spectrum(df, i)
+    sfspectrum = load_spectrum(df, i)
     push!(sfspectra, sfspectrum)
   end
+  return sfspectra
+end
+
+
+function get_attribute(s::Array{SFSpectrum}, attr::AbstractString)
+    values = []
+    for i in s
+        val = get_attribute(i, attr)
+        push!(values, val)
+    end
+    return values
+end
+
+
+function get_attribute(s::SFSpectrum, attr::AbstractString)
+    path = joinpath(s.dir, "raw")
+    flist = searchdir(path, ".txt")
+    dict = read_metadata(joinpath(path, flist[1]))
+    val = dict[attr]
+end
+
+
+function get_attributes(s::SFSpectrum)
+    path = joinpath(s.dir, "raw")
+    flist = searchdir(path, ".txt")
+    dict = read_metadata(joinpath(path, flist[1]))
 end
 
 
