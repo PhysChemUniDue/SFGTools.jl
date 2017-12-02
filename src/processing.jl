@@ -1,18 +1,18 @@
 """
 Remove cosmic events from SFSpectrum
 """
-function remove_events!(s::SFSpectrum)
-  s.s = remove_events!(s.s)
+function rm_events!(s::SFSpectrum)
+  s.s = rm_events!(s.s)
 end
 
-# function remove_events!(s::Array{SFSpectrum})
+# function rm_events!(s::Array{SFSpectrum})
 #   for r in s
-#     r.s = remove_events!(r.s)
+#     r.s = rm_events!(r.s)
 #   end
 #   return s
 # end
 
-function remove_events!(s::AbstractArray)
+function rm_events!(s::AbstractArray)
   r = reshape(s, (:, 1))
   dr = diff(r)
   threshold = 4 * std(dr)
@@ -33,7 +33,7 @@ end
 """
 Remove Background →SFSpectrum
 """
-function rmbackground!(s::SFSpectrum, bg::SFSpectrum)
+function rm_background!(s::SFSpectrum, bg::SFSpectrum)
     # Make a copy of the background spectrum because we don't want to
     # change it inside this function.
     bgc = copy(bg)
@@ -51,9 +51,31 @@ function rmbackground!(s::SFSpectrum, bg::SFSpectrum)
     s.s -= bgc.s
 end
 
-function rmbackground!(a::Array{SFSpectrum}, bg::SFSpectrum)
+function rm_background!(a::Array{SFSpectrum}, bg::SFSpectrum)
     for i = 1:length(a)
-        rmbackground!(a[i], bg)
+        rm_background!(a[i], bg)
     end
     return a
+end
+
+
+function get_ir_wavelength(s::SFSpectrum)
+    const N_PIXEL = 512
+    const VIS_WAVELENGTH = 512.8
+    const RANGE = 210
+
+    function sf2ir(sf, vis)
+        1 / (1/sf - 1/vis)
+    end
+
+    sf_wavelength = get_attribute(s, "spectrometer_wavelength")
+    x_binning = get_attribute(s, "x_binning")
+    num_points = N_PIXEL/x_binning
+    ir_central = sf2ir(sf_wavelength, VIS_WAVELENGTH)
+    ir_wavelength = linspace(ir_central - RANGE, ir_central + RANGE, num_points)
+end
+
+
+function get_ir_wavenumber(s::SFSpectrum)
+    1 / get_ir_wavelength(s) * 1e7
 end

@@ -1,5 +1,3 @@
-using FileIO
-using DataFrames
 
 """
 List available spectra.
@@ -9,7 +7,7 @@ The working directory has to be like the following:
 The result with some useful information is stored in a DataFrame. No spectra are
 loaded hereby to save time. Load the actual spectra via `load_spectra(ids)`.
 """
-function list_data(data_directory="./"; exact="", inexact="")
+function list_spectra(data_directory="./"; exact="", inexact="")
 
   const N_PIXEL = 512
 
@@ -23,7 +21,7 @@ function list_data(data_directory="./"; exact="", inexact="")
   for dir in dirlist
       mfilelist = searchdir(dir, "data.txt")
       mfile = mfilelist[1]
-      mdict = read_metadata(joinpath(dir, mfile))
+      mdict = get_metadata(joinpath(dir, mfile))
 
       sz = Int64[N_PIXEL/mdict["x_binning"], N_PIXEL/mdict["y_binning"], length(mfilelist)]
       date = DateTime(mdict["timestamp"])
@@ -64,7 +62,7 @@ function grab(dir="./")
         for dir in dirs
             if dir == "raw"
                 mlist = searchdir(joinpath(root, dir), "data.txt")
-                mdict = read_metadata(joinpath(root, dir, mlist[1]))
+                mdict = get_metadata(joinpath(root, dir, mlist[1]))
                 push!(idlist, Int64(Dates.value(DateTime(mdict["timestamp"]))))
                 push!(namelist, splitdir(splitdir(root)[1])[2])
                 push!(dirlist, joinpath(root, dir))
@@ -77,7 +75,7 @@ end
 
 """
 """
-function load_spectrum(id::Int64)
+function load_spectra(id::Int64)
   # Load grabbed data
   dir = getdir(id)
 
@@ -87,10 +85,10 @@ function load_spectrum(id::Int64)
   sfspectrum = SFSpectrum(id, s)
 end
 
-function load_spectrum(id::AbstractArray)
+function load_spectra(id::AbstractArray)
   sfspectra = SFSpectrum[]
   for i in id
-    sfspectrum = load_spectrum(i)
+    sfspectrum = load_spectra(i)
     push!(sfspectra, sfspectrum)
   end
   return sfspectra
@@ -107,7 +105,7 @@ function get_attribute(s::Array{SFSpectrum}, attr::AbstractString)
 end
 
 function get_attribute(id::Int64, attr::AbstractString)
-    dict = read_metadata(id)
+    dict = get_metadata(id)
     val = dict[attr]
 end
 
@@ -138,15 +136,15 @@ function getdir(id::Int64)
     dir = data[idx,:][3]
 end
 
-read_metadata(s::SFSpectrum) = read_metadata(s.id)
+get_metadata(s::SFSpectrum) = get_metadata(s.id)
 
-function read_metadata(id::Int64)
+function get_metadata(id::Int64)
     dir = getdir(id)
-    mdict = read_metadata(dir)
+    mdict = get_metadata(dir)
 end
 
 
-function read_metadata(path::AbstractString)
+function get_metadata(path::AbstractString)
   if splitext(path)[2] != ".txt"
       mfile = searchdir(path, "data.txt")[1]
       path = joinpath(path, mfile)
