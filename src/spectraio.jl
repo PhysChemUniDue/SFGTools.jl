@@ -9,96 +9,88 @@ The working directory has to be like the following:
 The result with some useful information is stored in a DataFrame. No spectra are
 loaded hereby to save time. Load the actual spectra via `load_spectra(ids)`.
 """
-function list_data(data_directory="./"; filterkey="")
-  # Lets put the result in a DataFrame for nice displaying and
-  # nice functionality like sorting
+function list_data(data_directory="./"; exact="", inexact="")
 
-  # Initialize things that end up in the data frame
-  ids = Int64[]        #defined by first spectrums timestamp
-  names = String[]
-  numbers = Int64[]    #subfolder number
-  dates = DateTime[]
-  sizes = Array{Int64,1}[]
-  directories = String[]
+  const N_PIXEL = 512
 
-  # List only directories
-  dir_list_dates = filter!(x -> isdir(joinpath(data_directory, x)),
-                           readdir(data_directory))
+  dat = readdlm(".spectralist")
+  idlist = dat[:,1]
+  namelist = dat[:,2]
+  dirlist = dat[:,3]
+  datelist = []
+  sizelist = []
+  numlist = Int64[]
+  for dir in dirlist
+      mfilelist = searchdir(dir, "data.txt")
+      mfile = mfilelist[1]
+      mdict = read_metadata(joinpath(dir, mfile))
 
-  for date_dir in dir_list_dates
-    # List those directories with that at least contain a folder named "1".
-    # Data found is the directory
-    # with the name that was given to the spectrum.
-    name_folders = filter!(x -> ispath(joinpath(data_directory, date_dir, x, "1")),
-                         readdir(joinpath(data_directory, date_dir)))
+      sz = Int64[N_PIXEL/mdict["x_binning"], N_PIXEL/mdict["y_binning"], length(mfilelist)]
+      date = DateTime(mdict["timestamp"])
 
-    for name_folder in name_folders
-      # Loop through the numberd folders
-      num_folders = readdir(joinpath(data_directory, date_dir, name_folder))
-
-      for num_folder in num_folders
-        # Search for txt files which hold metadata information
-        path = joinpath(data_directory, date_dir, name_folder, num_folder)
-        meta_file_list = searchdir(joinpath(path, "raw"), ".txt")
-
-        # Check if theres metadata in the folder. If not continue with next
-        # folder.
-        if isempty(meta_file_list)
-            println("Didn't find metadata in $path.")
-            continue
-        end
-
-        meta_dict = read_metadata(joinpath(path, "raw", meta_file_list[1]))
-        size_spectra = Int64[512/meta_dict["x_binning"], 512/meta_dict["y_binning"], length(meta_file_list)]
-        date = DateTime(meta_dict["timestamp"])
-
-        push!(ids, Int64(Dates.value(date)))
-        push!(names, name_folder)
-        push!(numbers, parse(Int64, num_folder))
-        push!(dates, date)
-        push!(sizes, size_spectra)
-        push!(directories, path)
-      end
-    end
+      push!(sizelist, sz)
+      push!(datelist, date)
+      push!(numlist, parse(Int64, splitdir(splitdir(dir)[1])[2]))
   end
 
   df = DataFrame(
-    id = ids,
-    name = names,
-    number = numbers,
-    date = dates,
-    siz = sizes,
-    dir = directories,
+    id = idlist,
+    name = namelist,
+    number = numlist,
+    date = datelist,
+    # siz = sizelist,
+    # dir = dirlist,
   )
 
   # Filter the dataframe
-  if filterkey != ""
-      df = df[lowercase.(df[:name]) .== lowercase(filterkey), :]
+  if exact != ""
+      df = df[lowercase.(df[:name]) .== lowercase(exact), :]
+  end
+  if inexact != ""
+      df = df[contains.(lowercase.(df[:name]), lowercase(inexact)), :]
   end
 
   return df
 
 end
 
-
-function load_spectrum(df::DataFrame, id::Int64)
-  # Get the row we are interested in
-  subdf = df[df[:id] .== id, :]
-
-  # Get the stuff that was already in the data frame
-  name = subdf[:name][1]
-  directory = subdf[:dir][1]
-
-  # Load the spectrum files
-  spectrum = read_as_3D(directory, Float64)
-
-  sfspectrum = SFSpectrum(id, name, directory, spectrum)
+"""
+"""
+function grab(dir="./")
+    idlist = Int64[]
+    namelist = String[]
+    dirlist = String[]
+    for (root, dirs, files) in walkdir(dir)
+        for dir in dirs
+            if dir == "raw"
+                mlist = searchdir(joinpath(root, dir), "data.txt")
+                mdict = read_metadata(joinpath(root, dir, mlist[1]))
+                push!(idlist, Int64(Dates.value(DateTime(mdict["timestamp"]))))
+                push!(namelist, splitdir(splitdir(root)[1])[2])
+                push!(dirlist, joinpath(root, dir))
+            end
+        end
+    end
+    println("Collected $(length(idlist)) spectra")
+    writedlm(".spectralist", [idlist namelist dirlist])
 end
 
-function load_spectrum(df::DataFrame, id::AbstractArray)
+"""
+"""
+function load_spectrum(id::Int64)
+  # Load grabbed data
+  dir = getdir(id)
+
+  # Load the spectrum files
+  s = read_as_3D(dir, Float64)
+
+  sfspectrum = SFSpectrum(id, s)
+end
+
+function load_spectrum(id::AbstractArray)
   sfspectra = SFSpectrum[]
   for i in id
-    sfspectrum = load_spectrum(df, i)
+    sfspectrum = load_spectrum(i)
     push!(sfspectra, sfspectrum)
   end
   return sfspectra
@@ -114,24 +106,16 @@ function get_attribute(s::Array{SFSpectrum}, attr::AbstractString)
     return values
 end
 
-
-function get_attribute(s::SFSpectrum, attr::AbstractString)
-    path = joinpath(s.dir, "raw")
-    flist = searchdir(path, ".txt")
-    dict = read_metadata(joinpath(path, flist[1]))
+function get_attribute(id::Int64, attr::AbstractString)
+    dict = read_metadata(id)
     val = dict[attr]
 end
 
-
-function get_attributes(s::SFSpectrum)
-    path = joinpath(s.dir, "raw")
-    flist = searchdir(path, ".txt")
-    dict = read_metadata(joinpath(path, flist[1]))
-end
+get_attribute(s::SFSpectrum, attr::AbstractString) = get_attribute(s.id, attr)
 
 
 function read_as_3D(directory::AbstractString, astype=Float64)
-    path = joinpath(directory, "raw")
+    path = joinpath(directory)
     filelist = searchdir(path, ".tiff")
     if isempty(filelist)
         println("Could not find a .tiff file in $directory.")
@@ -148,17 +132,35 @@ function read_as_3D(directory::AbstractString, astype=Float64)
 end
 
 
-function read_metadata(meta_file)
-  data = readdlm(meta_file, '\t')
+function getdir(id::Int64)
+    data = readdlm(".spectralist")
+    idx = findin(data, id)
+    dir = data[idx,:][3]
+end
+
+read_metadata(s::SFSpectrum) = read_metadata(s.id)
+
+function read_metadata(id::Int64)
+    dir = getdir(id)
+    mdict = read_metadata(dir)
+end
+
+
+function read_metadata(path::AbstractString)
+  if splitext(path)[2] != ".txt"
+      mfile = searchdir(path, "data.txt")[1]
+      path = joinpath(path, mfile)
+  end
+  data = readdlm(path, '\t')
   keys = data[:,1]
   values = data[:,2]
 
-  meta_dict = Dict{String, Any}()
+  mdict = Dict{String, Any}()
   for (i, key) in enumerate(keys)
-      meta_dict[key] = values[i]
+      mdict[key] = values[i]
   end
 
-  return meta_dict
+  return mdict
 end
 
 

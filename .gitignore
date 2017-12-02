@@ -9,6 +9,7 @@ deps/deps.jl
 ### Sample Data ###
 2017-11-28
 2017-11-29
+.spectralist
 
 ### macOS ###
 *.DS_Store

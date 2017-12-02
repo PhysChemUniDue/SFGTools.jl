@@ -1,16 +1,29 @@
-import Base: mean, mean!, size
+import Base: mean, mean!, size, ndims
 import Base: +,-,*,/
+import Base: copy
 
-mean(s::SFSpectrum, dim=3) = squeeze(mean(s.spectrum, dim), dim)
-size(s::SFSpectrum)        = size(s.spectrum)
+size(s::SFSpectrum) = size(s.s)
+ndims(s::SFSpectrum) = length(size(s))
 
-function mean!(s::SFSpectrum)
-  s.spectrum = mean(s, dim)
+"""
+Combine all single spectra to a single one. Returns the mean counts
+per second.
+"""
+function mean(s::SFSpectrum)
+    exptime = get_attribute(s, "ccd_exposure_time")
+    squeeze(mean(s.s, 3), 3) / exptime
 end
 
-+(s::SFSpectrum, t::SFSpectrum) = s.spectrum + t.spectrum
--(s::SFSpectrum, t::SFSpectrum) = s.spectrum - t.spectrum
-*(s::SFSpectrum, a::Number)     = s.spectrum * a
-*(a::Number, s::SFSpectrum)     = a * s.spectrum
-/(s::SFSpectrum, a::Number)     = s.spectrum / a
-/(a::Number, s::SFSpectrum)     = a ./ s.spectrum
+function mean!(s::SFSpectrum)
+  s.s = mean(s)
+end
+
++(s::SFSpectrum, t::SFSpectrum) = s.s + t.s
+-(s::SFSpectrum, t::SFSpectrum) = s.s - t.s
+*(s::SFSpectrum, a::Number)     = s.s * a
+*(a::Number, s::SFSpectrum)     = a * s.s
+/(s::SFSpectrum, a::Number)     = s.s / a
+/(a::Number, s::SFSpectrum)     = a ./ s.s
+
+
+copy(s::SFSpectrum) = SFSpectrum(copy(s.id), copy(s.s))
