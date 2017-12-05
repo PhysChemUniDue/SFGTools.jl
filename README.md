@@ -3,7 +3,7 @@
 ## Installation
 From the REPL do
 ```julia
-julia> Pkg.clone("")
+julia> Pkg.clone("https://github.com/PhysChemUniDue/SFGTools.jl")
 ```
 
 ## Usage
@@ -11,6 +11,10 @@ julia> Pkg.clone("")
 *EXAMPLE NOTEBOOK PROVIDED*
 
 ### Load Spectra
+Use the module via
+```julia
+using SFGTools
+```
 Generate a `.spectralist` file in your current director by executing
 ```julia
 julia> grab("./mydatadir")

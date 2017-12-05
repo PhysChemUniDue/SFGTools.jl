@@ -62,6 +62,8 @@ function list_spectra(data_directory="./"::AbstractString; exact=""::AbstractStr
       df = df[bool_array, :]
   end
 
+  sort!(df, cols=:id)
+
   return df
 
 end
@@ -174,7 +176,7 @@ function get_metadata(path::AbstractString)
       mfile = searchdir(path, "data.txt")[1]
       path = joinpath(path, mfile)
   end
-  data = readdlm(path; comments=false)
+  @show data = readdlm(path, '\t'; comments=false)
   keys = data[:,1]
   values = data[:,2]
 

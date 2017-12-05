@@ -10,9 +10,9 @@ function rm_events!(s::SFSpectrum, width=2)
   s.s = rm_events!(s.s, width)
 end
 
-function rm_events!(s::Array{SFSpectrum})
+function rm_events!(s::Array{SFSpectrum}, width=2)
   for r in s
-    r.s = rm_events!(r.s)
+    r.s = rm_events!(r.s, width)
   end
   return s
 end
@@ -62,7 +62,7 @@ end
 
 function rm_background!(a::Array{SFSpectrum}, bg::SFSpectrum)
     for i = 1:length(a)
-        rm_background!(a[i], bg)
+        a[i] = rm_background!(a[i], bg)
     end
     return a
 end
