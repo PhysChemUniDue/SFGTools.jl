@@ -3,6 +3,7 @@
 
 # Language
 *.rb linguist-language=Julia
+project-docs/* linguist-documentation
 
 # Custom for Visual Studio
 *.cs     diff=csharp
