@@ -62,7 +62,7 @@ end
 
 function rm_background!(a::Array{SFSpectrum}, bg::SFSpectrum)
     for i = 1:length(a)
-        a[i] = rm_background!(a[i], bg)
+        a[i].s = rm_background!(a[i], bg)
     end
     return a
 end
