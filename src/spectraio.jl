@@ -176,7 +176,7 @@ function get_metadata(path::AbstractString)
       mfile = searchdir(path, "data.txt")[1]
       path = joinpath(path, mfile)
   end
-  @show data = readdlm(path, '\t'; comments=false)
+  data = readdlm(path, '\t'; comments=false)
   keys = data[:,1]
   values = data[:,2]
 
