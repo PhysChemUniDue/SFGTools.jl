@@ -1,17 +1,22 @@
 
 """
 List available spectra.
-The working directory has to be like the following:
-`pdw()/2011-11-11/SpectrumName/...``
+First `grab(datafolder)` the spectra to genereate a `.spectralist` file. You can
+optionally pass the path to the `.spectralist` file in the arguments.
+
+Filter the dataframe:
+* `exact="name"`: Match the exact name of the spectrum
+* `inexact="part"`: Check if the name contains part of the string
+* `d=(2011, 01, 31)`: Filter for specific date
 
 The result with some useful information is stored in a DataFrame. No spectra are
-loaded hereby to save time. Load the actual spectra via `load_spectra(ids)`.
+loaded hereby to save time. Load the actual spectra via `load_spectra(id)`
+where `id` is `list_spectra()[:id]` See the DataFrames package for more info.
 """
-function list_spectra(data_directory="./"; exact="", inexact="")
+function list_spectra(data_directory="./"::AbstractString; exact=""::AbstractString, inexact=""::AbstractString, d=(0,0,0)::Tuple{Int64,Int64,Int64})
 
   const N_PIXEL = 512
-
-  dat = readdlm(".spectralist")
+  dat = readdlm(".spectralist"; comments=false)
   idlist = dat[:,1]
   namelist = dat[:,2]
   dirlist = dat[:,3]
@@ -44,8 +49,17 @@ function list_spectra(data_directory="./"; exact="", inexact="")
   if exact != ""
       df = df[lowercase.(df[:name]) .== lowercase(exact), :]
   end
+
   if inexact != ""
       df = df[contains.(lowercase.(df[:name]), lowercase(inexact)), :]
+  end
+
+  if !all(iszero.(d))
+      # Strangely this gives an array of type DataArrays.DataArray{Any,1}
+      # We need it to be a Bool array
+      any_array =  Dates.yearmonthday.(df[:date]) .== [d]
+      bool_array = convert(DataArrays.DataArray{Bool,1}, any_array)
+      df = df[bool_array, :]
   end
 
   return df
@@ -53,6 +67,9 @@ function list_spectra(data_directory="./"; exact="", inexact="")
 end
 
 """
+Make a data file that contains information where to find spectra connected to
+an ID. All spectra are internally referenced by this id. `dir` is the main data
+directory (`dir/2011-01-31/Name/...`).
 """
 function grab(dir="./")
     idlist = Int64[]
@@ -74,6 +91,7 @@ function grab(dir="./")
 end
 
 """
+Load the spectra specified by `id`. `id` can be an Int64 or Array{Int64}.
 """
 function load_spectra(id::Int64)
   # Load grabbed data
@@ -94,7 +112,10 @@ function load_spectra(id::AbstractArray)
   return sfspectra
 end
 
-
+"""
+Get an attribute of a spectrum or an array of spectra. To get available
+attribute list these via `get_metadata(spectrum)`.
+"""
 function get_attribute(s::Array{SFSpectrum}, attr::AbstractString)
     values = []
     for i in s
@@ -110,7 +131,6 @@ function get_attribute(id::Int64, attr::AbstractString)
 end
 
 get_attribute(s::SFSpectrum, attr::AbstractString) = get_attribute(s.id, attr)
-
 
 function read_as_3D(directory::AbstractString, astype=Float64)
     path = joinpath(directory)
@@ -131,11 +151,16 @@ end
 
 
 function getdir(id::Int64)
-    data = readdlm(".spectralist")
+    data = readdlm(".spectralist"; comments=false)
     idx = findin(data, id)
     dir = data[idx,:][3]
 end
 
+
+"""
+Get all available metadata for a spectrum. Takes a SFSpectrum struct or an id as
+an Int64.
+"""
 get_metadata(s::SFSpectrum) = get_metadata(s.id)
 
 function get_metadata(id::Int64)
@@ -149,7 +174,7 @@ function get_metadata(path::AbstractString)
       mfile = searchdir(path, "data.txt")[1]
       path = joinpath(path, mfile)
   end
-  data = readdlm(path, '\t')
+  data = readdlm(path; comments=false)
   keys = data[:,1]
   values = data[:,2]
 

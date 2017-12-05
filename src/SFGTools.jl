@@ -1,3 +1,4 @@
+__precompile__()
 module SFGTools
 
 using FileIO
@@ -14,8 +15,8 @@ export  SFSpectrum,
         get_attribute,
         get_metadata,
         rm_events!,
-        rm_background!!,
+        rm_background!,
         get_ir_wavelength,
-        get_ir_wavenumber,
-        
+        get_ir_wavenumber
+
 end

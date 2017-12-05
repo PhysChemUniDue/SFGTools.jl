@@ -1,37 +1,47 @@
+using PyPlot
+
 """
-Remove cosmic events from SFSpectrum
+Remove spikes from a spectrum.
+Takes a single spectrum or an array of spectra. `width` should be equal to the
+width of the expected spikes (i.e. if a single spike takes up 4 pixels `width`
+should be 4)
 """
-function rm_events!(s::SFSpectrum)
-  s.s = rm_events!(s.s)
+function rm_events!(s::SFSpectrum, width=2)
+  s.s = rm_events!(s.s, width)
 end
 
-# function rm_events!(s::Array{SFSpectrum})
-#   for r in s
-#     r.s = rm_events!(r.s)
-#   end
-#   return s
-# end
+function rm_events!(s::Array{SFSpectrum})
+  for r in s
+    r.s = rm_events!(r.s)
+  end
+  return s
+end
 
-function rm_events!(s::AbstractArray)
+function rm_events!(s::Array{Float64}, width=2)
   r = reshape(s, (:, 1))
   dr = diff(r)
+
   threshold = 4 * std(dr)
-  for i = 3:length(dr)-1
-    if dr[i-1] > threshold && dr[i] < -threshold
-      println(i)
-      r[i] = (r[i-2] + r[i+2])/2
+  startidx = width + 2
+  endidx = length(dr) - width
+
+  for i = startidx:endidx
+    lowidx = i - width
+    uppidx = i + width - 1
+
+    if any(x -> x > threshold, dr[lowidx:i]) && any(x -> x < -threshold, dr[i:uppidx])
+      r[i] = (r[lowidx-1] + r[uppidx+1])/2
     end
   end
+
   s = reshape(r, size(s))
-  # figure()
-  # plot(dr)
-  # hlines([threshold, -threshold], 1, length(dr))
   return s
 end
 
 
 """
-Remove Background →SFSpectrum
+Remove Background from the first spectrum passed to the function. →SFSpectrum
+Takes a spectrum or an array of spectra `s` and a background spectrum `bg`.
 """
 function rm_background!(s::SFSpectrum, bg::SFSpectrum)
     # Make a copy of the background spectrum because we don't want to
@@ -39,10 +49,9 @@ function rm_background!(s::SFSpectrum, bg::SFSpectrum)
     bgc = copy(bg)
     a = [s, bgc]
     for i = 1:2
-        if ndims(a[i]) != 2 && ndims(a[i]) != 3
-            @show i
+        if ndims(a[i]) > 3
             @show size(a[i])
-            println("Expected ndims(s) and ndims(bg) to be 2 or 3.")
+            println("Expected ndims(s) and ndims(bg) to be 1, 2 or 3.")
             return
         elseif ndims(a[i]) == 3
             mean!(a[i])

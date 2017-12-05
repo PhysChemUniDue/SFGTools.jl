@@ -6,9 +6,10 @@
 *.jl.mem
 deps/deps.jl
 
+### Jupyter Notebooks ###
+.ipynb_checkpoints
+
 ### Sample Data ###
-2017-11-28
-2017-11-29
 .spectralist
 
 ### macOS ###
