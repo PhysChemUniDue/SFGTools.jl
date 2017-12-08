@@ -7,32 +7,39 @@ optionally pass the path to the `.spectralist` file in the arguments.
 Filter the dataframe:
 * `exact="name"`: Match the exact name of the spectrum
 * `inexact="part"`: Check if the name contains part of the string
-* `d=(2011, 01, 31)`: Filter for specific date
+* `date=(2011, 01, 31)`: Filter for specific date
+* `group=true`: Groups spectra by name
 
 The result with some useful information is stored in a DataFrame. No spectra are
 loaded hereby to save time. Load the actual spectra via `load_spectra(id)`
 where `id` is `list_spectra()[:id]` See the DataFrames package for more info.
 """
-function list_spectra(data_directory="./"::AbstractString; exact=""::AbstractString, inexact=""::AbstractString, d=(0,0,0)::Tuple{Int64,Int64,Int64})
+function list_spectra(data_directory="./"::AbstractString;
+                        exact=""::AbstractString,
+                        inexact=""::AbstractString,
+                        date=(0,0,0)::Tuple{Int64,Int64,Int64},
+                        group=false)
 
   const N_PIXEL = 512
   dat = readdlm(".spectralist"; comments=false)
-  idlist = dat[:,1]
-  namelist = dat[:,2]
-  dirlist = dat[:,3]
-  datelist = []
-  sizelist = []
+
+  idlist = convert(Array{Int64}, dat[:,1])
+  namelist = convert(Array{AbstractString}, dat[:,2])
+  dirlist = convert(Array{AbstractString}, dat[:,3])
+  datelist = DateTime[]
+  sizelist = Array{Int64,1}[]
   numlist = Int64[]
+
   for dir in dirlist
       mfilelist = searchdir(dir, "data.txt")
       mfile = mfilelist[1]
       mdict = get_metadata(joinpath(dir, mfile))
 
       sz = Int64[N_PIXEL/mdict["x_binning"], N_PIXEL/mdict["y_binning"], length(mfilelist)]
-      date = DateTime(mdict["timestamp"])
+      d = DateTime(mdict["timestamp"])
 
       push!(sizelist, sz)
-      push!(datelist, date)
+      push!(datelist, d)
       push!(numlist, parse(Int64, splitdir(splitdir(dir)[1])[2]))
   end
 
@@ -41,8 +48,7 @@ function list_spectra(data_directory="./"::AbstractString; exact=""::AbstractStr
     name = namelist,
     number = numlist,
     date = datelist,
-    # siz = sizelist,
-    # dir = dirlist,
+    sizes = sizelist,
   )
 
   # Filter the dataframe
@@ -54,15 +60,21 @@ function list_spectra(data_directory="./"::AbstractString; exact=""::AbstractStr
       df = df[contains.(lowercase.(df[:name]), lowercase(inexact)), :]
   end
 
-  if !all(iszero.(d))
+  if !all(iszero.(date))
       # Strangely this gives an array of type DataArrays.DataArray{Any,1}
       # We need it to be a Bool array
-      any_array =  Dates.yearmonthday.(df[:date]) .== [d]
+      any_array =  Dates.yearmonthday.(df[:date]) .== [date]
       bool_array = convert(DataArrays.DataArray{Bool,1}, any_array)
       df = df[bool_array, :]
   end
 
-  sort!(df, cols=:id)
+  if group
+      df = by(df, :name, df -> DataFrame(
+        N = length(df[:id]),
+        sizes = [unique(df[:sizes])],
+        dates = [unique(round.(df[:date], Dates.Day(1)))],
+        id = [df[:id]]))
+  end
 
   return df
 
