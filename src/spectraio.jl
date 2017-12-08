@@ -72,7 +72,7 @@ function list_spectra(data_directory="./"::AbstractString;
       df = by(df, :name, df -> DataFrame(
         N = length(df[:id]),
         sizes = [unique(df[:sizes])],
-        dates = [unique(round.(df[:date], Dates.Day(1)))],
+        dates = [unique(floor.(df[:date], Dates.Day(1)))],
         id = [df[:id]]))
   end
 
