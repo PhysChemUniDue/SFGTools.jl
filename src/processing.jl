@@ -85,8 +85,8 @@ function get_wavelength(s::SFSpectrum)
     λc = λ0 - Δp * pλ
 
     # First Pixel Wavelength:
-    first_pixel_wl = λc - (num_points/2 - 0.5) * pλ
-    last_pixel_wl  = λc + (num_points/2 - 0.5) * pλ
+    first_pixel_wl = λc - (num_points/2 - x_binning/2) * pλ
+    last_pixel_wl  = λc + (num_points/2 - x_binning/2) * pλ
 
     wl_range = linspace(first_pixel_wl, last_pixel_wl, num_points)
     wl = collect(wl_range)
