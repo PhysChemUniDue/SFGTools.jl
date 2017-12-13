@@ -94,15 +94,14 @@ function get_wavelength(s::SFSpectrum)
 end
 
 
-function get_ir_wavelength(s::SFSpectrum)
-    const VIS_WAVELENGTH = 512.8
+function get_ir_wavelength(s::SFSpectrum; vis=512.8)
 
     function sf2ir(sf, vis)
         1 ./ (1./sf - 1/vis)
     end
 
     sf_wavelength = get_wavelength(s)
-    ir_wavelength = sf2ir(sf_wavelength, VIS_WAVELENGTH)
+    ir_wavelength = sf2ir(sf_wavelength, vis)
 end
 
 
