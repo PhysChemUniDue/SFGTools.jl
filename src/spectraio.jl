@@ -61,11 +61,7 @@ function list_spectra(data_directory="./"::AbstractString;
   end
 
   if !all(iszero.(date))
-      # Strangely this gives an array of type DataArrays.DataArray{Any,1}
-      # We need it to be a Bool array
-      any_array =  Dates.yearmonthday.(df[:date]) .== [date]
-      bool_array = convert(DataArrays.DataArray{Bool,1}, any_array)
-      df = df[bool_array, :]
+      df = df[Dates.yearmonthday.(df[:date]) .== [date], :]
   end
 
   if group
