@@ -68,23 +68,43 @@ function rm_background!(a::Array{SFSpectrum}, bg::SFSpectrum)
 end
 
 
-function get_ir_wavelength(s::SFSpectrum)
+function get_wavelength(s::SFSpectrum)
     const N_PIXEL = 512
-    const VIS_WAVELENGTH = 512.8
-    const RANGE = 210
+
+    λ0 = get_attribute(s, "spectrometer_wavelength")
+    x_binning = get_attribute(s, "x_binning")
+    num_points = N_PIXEL / x_binning
+
+    # Calibration Parameters were determined in 2017-12-13_SpectrometerCalibration.ipynb
+    # Pixel offset
+    Δp = -0.000338165 * λ0^2 + 0.250245 * λ0 - 32.0725
+    # Wavelenths per pixel
+    pλ = -3.36321e-8 * λ0^2 + 4.9358e-6 * λ0 + 0.0192305
+
+    # Central Wavelength
+    λc = λ0 - Δp * pλ
+
+    # First Pixel Wavelength:
+    first_pixel_wl = λc - (num_points/2 - x_binning/2) * pλ
+    last_pixel_wl  = λc + (num_points/2 - x_binning/2) * pλ
+
+    wl_range = linspace(first_pixel_wl, last_pixel_wl, num_points)
+    wl = collect(wl_range)
+
+end
+
+
+function get_ir_wavelength(s::SFSpectrum; vis=512.6)
 
     function sf2ir(sf, vis)
-        1 / (1/sf - 1/vis)
+        1 ./ (1./sf - 1/vis)
     end
 
-    sf_wavelength = get_attribute(s, "spectrometer_wavelength")
-    x_binning = get_attribute(s, "x_binning")
-    num_points = N_PIXEL/x_binning
-    ir_central = sf2ir(sf_wavelength, VIS_WAVELENGTH)
-    ir_wavelength = linspace(ir_central - RANGE, ir_central + RANGE, num_points)
+    sf_wavelength = get_wavelength(s)
+    ir_wavelength = sf2ir(sf_wavelength, vis)
 end
 
 
 function get_ir_wavenumber(s::SFSpectrum)
-    1 / get_ir_wavelength(s) * 1e7
+    1 ./ get_ir_wavelength(s) * 1e7
 end
