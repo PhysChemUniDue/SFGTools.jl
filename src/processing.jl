@@ -68,6 +68,9 @@ function rm_background!(a::Array{SFSpectrum}, bg::SFSpectrum)
 end
 
 
+"""
+Return the wavelength in nm.
+"""
 function get_wavelength(s::SFSpectrum)
     const N_PIXEL = 512
 
@@ -93,7 +96,16 @@ function get_wavelength(s::SFSpectrum)
 
 end
 
+"""
+Return the wavenumbers in inverse centimeters
+"""
+function get_wavenumber(s::SFSpectrum)
+    1 ./ get_wavelength(s) * 1e7
+end
 
+"""
+Return the wavelength of the corresponding infrared light in nm.
+"""
 function get_ir_wavelength(s::SFSpectrum; vis=512.6)
 
     function sf2ir(sf, vis)
@@ -104,7 +116,9 @@ function get_ir_wavelength(s::SFSpectrum; vis=512.6)
     ir_wavelength = sf2ir(sf_wavelength, vis)
 end
 
-
+"""
+Return the wavenumber of the corresponding infrared light in inverse centimeters.
+"""
 function get_ir_wavenumber(s::SFSpectrum)
     1 ./ get_ir_wavelength(s) * 1e7
 end

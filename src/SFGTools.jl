@@ -17,6 +17,7 @@ export  SFSpectrum,
         rm_events!,
         rm_background!,
         get_wavelength,
+        get_wavenumber,
         get_ir_wavelength,
         get_ir_wavenumber
 
