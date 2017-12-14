@@ -143,7 +143,7 @@ function load_spectra(id::Int64)
   sfspectrum = SFSpectrum(id, s)
 end
 
-function load_spectra(id::Array{Int64})
+function load_spectra(id::AbstractArray{Int64})
   sfspectra = SFSpectrum[]
   for i in id
     sfspectrum = load_spectra(i)
