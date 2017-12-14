@@ -29,7 +29,8 @@ This returns a dataframe with some basic information about the spectra. You can 
 
 * ```exact="name"```        → Filters for the exact name of the spectrum
 * ```inexact="partofname"```  → Filters for matching parts in the spectrums name
-* ```d=(2011, 01, 31)```      → Filters for a specific date
+* ```date=(2011, 01, 31)```      → Filters for a specific date 
+* ```group=true```      → Group spectra by name
 
 Example:
 ```julia
@@ -58,10 +59,12 @@ or getting attributes of every spectrum in the series:
 julia> get_attribute(data, "ccd_temperature")
 ```
 
-You can get get the IR wavelengths/wavenumbers corresponding to the pixes via
+You can get get the IR wavelengths/wavenumbers corresponding to the pixels via
 ```julia
 julia> get_ir_wavelength(data[1])
 julia> get_ir_wavenumber(data[1])
+julia> get_wavelength(data[1])
+julia> get_wavenumber(data[1])
 ```
 
 ### Processing
