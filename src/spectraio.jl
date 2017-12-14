@@ -80,6 +80,14 @@ end
 Make a data file that contains information where to find spectra connected to
 an ID. All spectra are internally referenced by this id. `dir` is the main data
 directory (`dir/2011-01-31/Name/...`).
+
+By default this function writes only newly found spectra to the .spectralist file.
+If you want to rewrite the whole file pass `getall=true` as a keyword argument
+to the function.
+
+```julia
+julia> grab(directory; getall=true)
+```
 """
 function grab(dir="./"; getall=false)
 
@@ -163,6 +171,8 @@ function get_attribute(id::Int64, attr::AbstractString)
 end
 
 get_attribute(s::SFSpectrum, attr::AbstractString) = get_attribute(s.id, attr)
+
+
 
 function read_as_3D(directory::AbstractString, astype=Float64)
     path = joinpath(directory)
