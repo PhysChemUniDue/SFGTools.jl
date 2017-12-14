@@ -1,4 +1,3 @@
-using PyPlot
 
 """
 Remove spikes from a spectrum.

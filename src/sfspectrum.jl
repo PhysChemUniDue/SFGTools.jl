@@ -18,7 +18,7 @@ Combine all single spectra to a single one. Returns the mean counts
 per second.
 """
 function mean(s::SFSpectrum)
-    exptime = get_attribute(s, "ccd_exposure_time")
+    exptime = get_attribute(s, "ccd_exposure_time")::Float64
     squeeze(mean(s.s, 3), 3) / exptime
 end
 
