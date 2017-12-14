@@ -81,23 +81,45 @@ Make a data file that contains information where to find spectra connected to
 an ID. All spectra are internally referenced by this id. `dir` is the main data
 directory (`dir/2011-01-31/Name/...`).
 """
-function grab(dir="./")
+function grab(dir="./"; getall=false)
+
+    # Check if the .spectralist file exists. If not create it.
+    # If it exist read its contents.
+    if !isfile(".spectralist") || getall
+        f = open(".spectralist", "w") do f
+        end
+        idexisting = Int64[]
+    else
+        content = readdlm(".spectralist")
+        idexisting = convert.(Int64, content[:,1])
+    end
+
     idlist = Int64[]
     namelist = String[]
     dirlist = String[]
+
     for (root, dirs, files) in walkdir(dir)
         for dir in dirs
             if dir == "raw"
                 mlist = searchdir(joinpath(root, dir), "data.txt")
                 mdict = get_metadata(joinpath(root, dir, mlist[1]))
-                push!(idlist, Int64(Dates.value(DateTime(mdict["timestamp"]))))
-                push!(namelist, splitdir(splitdir(root)[1])[2])
-                push!(dirlist, joinpath(root, dir))
+
+                # Get ID
+                id = Int64(Dates.value(DateTime(mdict["timestamp"])))
+                if !any(idexisting .== id)
+                    push!(idlist, id)
+                    push!(namelist, splitdir(splitdir(root)[1])[2])
+                    push!(dirlist, joinpath(root, dir))
+                end
             end
         end
     end
-    println("Collected $(length(idlist)) spectra")
-    writedlm(".spectralist", [idlist namelist dirlist])
+
+    println("Collected $(length(idlist)) spectra. ($(length(idexisting) + length(idlist)) overall)")
+    # writedlm(".spectralist", [idlist namelist dirlist])
+    open(".spectralist", "a") do f
+        writedlm(f, [idlist namelist dirlist])
+    end
 end
 
 """
