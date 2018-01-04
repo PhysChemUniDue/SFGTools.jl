@@ -3,6 +3,7 @@ module SFGTools
 
 using FileIO
 using DataFrames
+using MAT
 
 include("sfspectrum.jl")
 include("spectraio.jl")
@@ -14,11 +15,13 @@ export  SFSpectrum,
         load_spectra,
         get_attribute,
         get_metadata,
+        is_attribute,
         rm_events!,
         rm_background!,
         get_wavelength,
         get_wavenumber,
         get_ir_wavelength,
-        get_ir_wavenumber
+        get_ir_wavenumber,
+        save_mat
 
 end

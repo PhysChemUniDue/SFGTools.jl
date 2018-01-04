@@ -173,7 +173,28 @@ end
 get_attribute(s::SFSpectrum, attr::AbstractString) = get_attribute(s.id, attr)
 
 
+"""
+Check if a spectrum has the attribute `attr`.
+"""
+function is_attribute(id::Int64, attr::AbstractString)
+    dict = get_metadata(id)
+    attr in keys(dict)
+end
 
+function is_attribute(s::Array{SFSpectrum}, attr::AbstractString)
+    values = []
+    for i in s
+        val = is_attribute(i, attr)
+        push!(values, val)
+    end
+    return values
+end
+
+is_attribute(s::SFSpectrum, attr::AbstractString) = is_attribute(s.id, attr)
+
+"""
+Read tiff files and put them in a 3D matrix
+"""
 function read_as_3D(directory::AbstractString, astype=Float64)
     path = joinpath(directory)
     filelist = searchdir(path, ".tiff")
@@ -231,4 +252,42 @@ end
 
 function searchdir(directory::AbstractString, key::AbstractString)
     filter!(x->contains(x, key), readdir(directory))
+end
+
+
+"""
+Save Spectra in a Matlab file.
+"""
+function save_mat(filename::AbstractString, s::SFSpectrum)
+    save_mat(filename, [s])
+end
+
+function save_mat(filename::AbstractString, s::Array{SFSpectrum})
+    # Check if filename has a proper extension
+    if splitext(filename)[2] != ".mat"
+        filename *= ".mat"
+    end
+
+    f = matopen(filename, "w")
+    
+    for i = 1:length(s)
+
+        # Put Stuff in dict
+        try
+            name = get_attribute(s[i], "name")
+        catch
+            name = get_attribute(s[i], "timestamp")
+        end
+
+        data = Dict(
+            "name" => get_attribute(s[i], "name"),
+            "signal" => mean(s[i]),
+            "wavelength" => get_ir_wavelength(s[i]),
+            "wavenumber" => get_ir_wavenumber(s[i]),
+        )
+
+        # Write to file
+        write(f, "data$i", data)
+    end
+    close(f)
 end
