@@ -1,6 +1,6 @@
 import Base: mean, mean!, size, ndims
 import Base: +,-,*,/
-import Base: copy
+import Base: copy, show
 
 """
 A container that holds a sum frequency spectrum.
@@ -18,12 +18,20 @@ Combine all single spectra to a single one. Returns the mean counts
 per second.
 """
 function mean(s::SFSpectrum)
-    exptime = get_attribute(s, "ccd_exposure_time")::Float64
-    squeeze(mean(s.s, 3), 3) / exptime
+    mean_spec = copy(s)
+    mean!(mean_spec)
+    return mean_spec
 end
 
 function mean!(s::SFSpectrum)
-  s.s = mean(s)
+  exptime = get_attribute(s, "ccd_exposure_time")::Float64
+  s.s = mean(s.s, 3) / exptime
+  for n = ndims(s.s):-1:1
+    if size(s.s, n) == 1
+      s.s = squeeze(s.s, n)
+    end
+  end
+  return s
 end
 
 +(s::SFSpectrum, t::SFSpectrum) = s.s + t.s
