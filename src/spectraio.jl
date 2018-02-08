@@ -1,3 +1,4 @@
+import FileIO.load
 
 """
 List available spectra.
@@ -14,14 +15,20 @@ The result with some useful information is stored in a DataFrame. No spectra are
 loaded hereby to save time. Load the actual spectra via `load_spectra(id)`
 where `id` is `list_spectra()[:id]` See the DataFrames package for more info.
 """
-function list_spectra(data_directory="./"::AbstractString;
-                        exact=""::AbstractString,
+function list_spectra(; exact=""::AbstractString,
                         inexact=""::AbstractString,
                         date=(0,0,0)::Tuple{Int64,Int64,Int64},
                         group=false)
 
   const N_PIXEL = 512
-  dat = readdlm(".spectralist"; comments=false)
+  dir = "./"
+  
+  spectrafile = joinpath(dir, ".spectralist")
+  if isfile(spectrafile)
+    dat = readdlm(spectrafile; comments=false)
+  else
+    error("The file $spectrafile does not exist.")
+  end
 
   idlist = convert(Array{Int64}, dat[:,1])
   namelist = convert(Array{AbstractString}, dat[:,2])
@@ -76,6 +83,13 @@ function list_spectra(data_directory="./"::AbstractString;
 
 end
 
+# For compatibility with older versions
+function list_spectra(str::String)
+    list_spectra()
+end
+
+@deprecate(list_spectra(str::String), list_spectra())
+
 """
 Make a data file that contains information where to find spectra connected to
 an ID. All spectra are internally referenced by this id. `dir` is the main data
@@ -117,7 +131,7 @@ function grab(dir="./"; getall=false)
                 if !any(idexisting .== id)
                     push!(idlist, id)
                     push!(namelist, splitdir(splitdir(root)[1])[2])
-                    push!(dirlist, joinpath(root, dir))
+                    push!(dirlist, joinpath(abspath(root), dir))
                 end
             end
         end
@@ -167,7 +181,8 @@ end
 
 function get_attribute(id::Int64, attr::AbstractString)
     dict = get_metadata(id)
-    val = dict[attr]
+    attr in keys(dict) ? val = dict[attr] : val = nothing
+    val
 end
 
 get_attribute(s::SFSpectrum, attr::AbstractString) = get_attribute(s.id, attr)
@@ -202,10 +217,10 @@ function read_as_3D(directory::AbstractString, astype=Float64)
         println("Could not find a .tiff file in $directory.")
         return
     end
-    I = FileIO.load(joinpath(path, filelist[1]))
+    I = load(joinpath(path, filelist[1]))
     C = Array{UInt16,3}(size(I,1), size(I,2), length(filelist))
     for (i, file) in enumerate(filelist)
-        I = FileIO.load(joinpath(path, file))
+        I = load(joinpath(path, file))
         C[:,:,i] = reinterpret(UInt16, I)
         C = convert(Array{astype}, C)
     end

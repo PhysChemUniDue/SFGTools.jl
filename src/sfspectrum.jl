@@ -43,3 +43,5 @@ end
 
 
 copy(s::SFSpectrum) = SFSpectrum(copy(s.id), copy(s.s))
+
+show(io::IO, d::SFSpectrum) = print(io,"$(typeof(d))($(d.id), $(typeof(d.s)) size $(size(d.s)))")

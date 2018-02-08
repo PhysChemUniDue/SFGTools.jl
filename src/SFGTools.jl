@@ -1,7 +1,6 @@
 __precompile__()
 module SFGTools
 
-using FileIO
 using DataFrames
 using MAT
 
