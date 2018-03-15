@@ -1,0 +1,18 @@
+name	
+comment	Lens green = 300 mm; Lens red = 100 mm; Lens red pump = 200mm; Collecting lens = 40 mm; Spectrometer lens = 150 mm; polarizer green = 0 degree; polarizer red = ?; polarizer spectrometer = 50 degree
+grating	2400
+spectrometer_wavelength	445.500000
+mirror_position	ccd
+pump_dl_position	19800
+ccd_exposure_time	1.000000
+ccd_readout_speed	80000
+x_binning	1
+y_binning	256
+ccd_temperature	-89
+timestamp	2018-02-15T20:06:35.782
+twin1_wavelength	NA
+twin2_wavelength	NA
+pump_ir_wavelength	3473
+micos_position_x	5130.000000
+micos_position_y	0.000000
+micos_position_z	0.000000

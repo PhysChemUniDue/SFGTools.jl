@@ -41,7 +41,7 @@ To get all the spectra whose name contains "Au" from the 1st of November 2011.
 To load the spectra you want you have to get their IDs. You can do this manually or get them from the filtered dataframe.
 ```julia
 julia> id = df[:id]
-julia> data = load(id)
+julia> data = load_spectra(id)
 ```
 
 ### SFSpectrum Objects

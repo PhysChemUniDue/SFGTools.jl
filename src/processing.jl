@@ -121,3 +121,48 @@ Return the wavenumber of the corresponding infrared light in inverse centimeters
 function get_ir_wavenumber(s::SFSpectrum)
     1 ./ get_ir_wavelength(s) * 1e7
 end
+
+
+"""
+Get the parameter that changes during the measurement as a string
+"""
+function get_variables(d::Array{SFSpectrum})
+    # Check if there is data
+    length(d) == 0 && return nothing
+    
+    keylist = d[1] |> get_metadata |> keys
+
+    dict = Dict{String, AbstractArray}()
+    
+    for k in keylist
+        vals = get_attribute(d, k)
+        uvals = unique(vals)
+        if length(uvals) > 1
+            dict[k] = uvals
+        end
+    end
+
+    return dict
+
+end
+
+"""
+Automated Processing.
+"""
+function quick_process(d::Array{SFSpectrum})
+    # 1. Get the variable of the Dataset
+    vars = get_variables(d)
+
+    # 2. Processing
+    rm_events!.(d)
+    mean!.(d)
+
+    λ = get_ir_wavelength(d[1])
+
+    z = zeros(size(d[1].s, 1), length(d), size(d[1].s, 2))
+    for i = 1:length(d)
+        z[:,i,:] = d[i].s
+    end
+
+    return λ, vars, z
+end
