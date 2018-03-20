@@ -146,6 +146,25 @@ function get_variables(d::Array{SFSpectrum})
 
 end
 
+
+"""
+Get the pump delay time in ps for a given SFSpectrum
+"""
+function get_pump_delay(s::SFSpectrum)
+    p = get_attribute(s, "pump_dl_position")
+    dlpos2t(p)
+end
+
+"""
+Return the delay time for the infrared pump in ps
+"""
+function dlpos2t(p)
+    c = 299792458.0
+    l = 0.62
+    n = 125000.0
+    p * l / (n * c) * 1e9
+end
+
 """
 Automated Processing.
 """

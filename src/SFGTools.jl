@@ -21,6 +21,8 @@ export  SFSpectrum,
         get_wavenumber,
         get_ir_wavelength,
         get_ir_wavenumber,
+        get_pump_delay,
+        dlpos2t,
         get_variables,
         quick_process,
         save_mat
