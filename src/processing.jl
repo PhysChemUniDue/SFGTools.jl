@@ -162,7 +162,7 @@ function dlpos2t(p)
     c = 299792458.0
     l = 0.62
     n = 125000.0
-    p * l / (n * c) * 1e9
+    p * l / (n * c) * 1e12
 end
 
 """
