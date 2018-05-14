@@ -112,7 +112,7 @@ end
 Return the wavenumbers in inverse centimeters
 """
 function get_wavenumber(s::SFSpectrum)
-    1 ./ get_wavelength(s) * 1e7
+    1 ./ get_wavelength(s; kwargs...) * 1e7
 end
 
 """
@@ -124,7 +124,7 @@ function get_ir_wavelength(s::SFSpectrum; vis=512.6)
         1 ./ (1./sf - 1/vis)
     end
 
-    sf_wavelength = get_wavelength(s)
+    sf_wavelength = get_wavelength(s; kwargs...)
     ir_wavelength = sf2ir(sf_wavelength, vis)
 end
 
