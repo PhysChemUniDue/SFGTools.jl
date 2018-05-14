@@ -69,19 +69,32 @@ end
 
 """
 Return the wavelength in nm.
+
+The appropriate calibration curve of the spectrometer is automatically selected via the timestamp of the
+spectrum. If you want to select a specific calibration set the `date` keyword argument to something like
+`date=DateTime("2011-11-11")` to select the calibration curve that was valid on that specific date.
 """
-function get_wavelength(s::SFSpectrum)
+function get_wavelength(s::SFSpectrum; 
+                        date = DateTime(get_attribute(s, "timestamp")))
     const N_PIXEL = 512
 
     λ0 = get_attribute(s, "spectrometer_wavelength")
     x_binning = get_attribute(s, "x_binning")
     num_points = N_PIXEL / x_binning
 
-    # Calibration Parameters were determined in 2017-12-13_SpectrometerCalibration.ipynb
-    # Pixel offset
-    Δp = -0.000338165 * λ0^2 + 0.250245 * λ0 - 32.0725
-    # Wavelenths per pixel
-    pλ = -3.36321e-8 * λ0^2 + 4.9358e-6 * λ0 + 0.0192305
+    if date < DateTime("2018-05-14")
+        # Calibration Parameters were determined in 2017-12-13_SpectrometerCalibration.ipynb
+        # Pixel offset
+        Δp = -0.000338165 * λ0^2 + 0.250245 * λ0 - 32.0725
+        # Wavelenths per pixel
+        pλ = -3.36321e-8 * λ0^2 + 4.9358e-6 * λ0 + 0.0192305
+    else
+        # Calibration parameters were determined on 2018-05-14T17:35:18.995
+        # Pixel offset
+        Δp = -0.0002511567068034343 * λ0^2 + 0.17459249760169204 * λ0 - -12.204165364873228
+        # Wavelenths per pixel
+        pλ = -2.8767121934619073e-8 * λ0^2 + 3.532087562855135e-7 * λ0 + 0.02024248616034501
+    end
 
     # Central Wavelength
     λc = λ0 - Δp * pλ
