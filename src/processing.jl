@@ -111,28 +111,28 @@ end
 """
 Return the wavenumbers in inverse centimeters
 """
-function get_wavenumber(s::SFSpectrum)
+function get_wavenumber(s::SFSpectrum; date=DateTime(get_attribute(s, "timestamp")))
     1 ./ get_wavelength(s; kwargs...) * 1e7
 end
 
 """
 Return the wavelength of the corresponding infrared light in nm.
 """
-function get_ir_wavelength(s::SFSpectrum; vis=512.6)
+function get_ir_wavelength(s::SFSpectrum; vis=512.6, date=DateTime(get_attribute(s, "timestamp")))
 
     function sf2ir(sf, vis)
         1 ./ (1./sf - 1/vis)
     end
 
-    sf_wavelength = get_wavelength(s; kwargs...)
+    sf_wavelength = get_wavelength(s; date=date)
     ir_wavelength = sf2ir(sf_wavelength, vis)
 end
 
 """
 Return the wavenumber of the corresponding infrared light in inverse centimeters.
 """
-function get_ir_wavenumber(s::SFSpectrum)
-    1 ./ get_ir_wavelength(s) * 1e7
+function get_ir_wavenumber(s::SFSpectrum; date=DateTime(get_attribute(s, "timestamp")))
+    1 ./ get_ir_wavelength(s; date=date) * 1e7
 end
 
 
