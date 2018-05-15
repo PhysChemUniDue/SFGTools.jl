@@ -1,3 +1,5 @@
+const VIS_WAVELENGTH = 512.4  # According to service protocol of May 2018
+
 
 """
 Remove spikes from a spectrum.
@@ -68,7 +70,7 @@ end
 
 
 """
-Return the wavelength in nm.
+Return the wavelength of the detected light in nm.
 
 The appropriate calibration curve of the spectrometer is automatically selected via the timestamp of the
 spectrum. If you want to select a specific calibration set the `date` keyword argument to something like
@@ -110,6 +112,12 @@ end
 
 """
 Return the wavenumbers in inverse centimeters
+
+The appropriate calibration curve of the spectrometer is automatically selected via the timestamp of the
+spectrum. If you want to select a specific calibration set the `date` keyword argument to something like
+`date=DateTime("2011-11-11")` to select the calibration curve that was valid on that specific date.
+
+You can change the default wavelength for the visible light by passing a value to the `vis` keyword argument.
 """
 function get_wavenumber(s::SFSpectrum; date=DateTime(get_attribute(s, "timestamp")))
     1 ./ get_wavelength(s; kwargs...) * 1e7
@@ -118,7 +126,7 @@ end
 """
 Return the wavelength of the corresponding infrared light in nm.
 """
-function get_ir_wavelength(s::SFSpectrum; vis=512.6, date=DateTime(get_attribute(s, "timestamp")))
+function get_ir_wavelength(s::SFSpectrum; vis=VIS_WAVELENGTH, date=DateTime(get_attribute(s, "timestamp")))
 
     function sf2ir(sf, vis)
         1 ./ (1./sf - 1/vis)
@@ -130,9 +138,15 @@ end
 
 """
 Return the wavenumber of the corresponding infrared light in inverse centimeters.
+
+The appropriate calibration curve of the spectrometer is automatically selected via the timestamp of the
+spectrum. If you want to select a specific calibration set the `date` keyword argument to something like
+`date=DateTime("2011-11-11")` to select the calibration curve that was valid on that specific date.
+
+You can change the default wavelength for the visible light by passing a value to the `vis` keyword argument.
 """
-function get_ir_wavenumber(s::SFSpectrum; date=DateTime(get_attribute(s, "timestamp")))
-    1 ./ get_ir_wavelength(s; date=date) * 1e7
+function get_ir_wavenumber(s::SFSpectrum; vis=VIS_WAVELENGTH, date=DateTime(get_attribute(s, "timestamp")))
+    1 ./ get_ir_wavelength(s; kwargs...) * 1e7
 end
 
 
