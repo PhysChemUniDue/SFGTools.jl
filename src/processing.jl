@@ -2,25 +2,30 @@ const VIS_WAVELENGTH = 512.4  # According to service protocol of May 2018
 
 
 """
+`rm_events!(s::SFSpectrum, width=2)`
 Remove spikes from a spectrum.
 Takes a single spectrum or an array of spectra. `width` should be equal to the
 width of the expected spikes (i.e. if a single spike takes up 4 pixels `width`
 should be 4)
+
+The function prints information about removed events by default. Turn off this behaviour by
+setting the keyword argument `printinfo` to `false`.
 """
-function rm_events!(s::SFSpectrum, width=2)
-  s.s = rm_events!(s.s, width)
+function rm_events!(s::SFSpectrum, width=2; kwargs...)
+  s.s = rm_events!(s.s, width; kwargs...)
 end
 
-function rm_events!(s::Array{SFSpectrum}, width=2)
+function rm_events!(s::Array{SFSpectrum}, width=2; kwargs...)
   for r in s
-    r.s = rm_events!(r.s, width)
+    r.s = rm_events!(r.s, width; kwargs...)
   end
   return s
 end
 
-function rm_events!(s::Array{Float64}, width=2)
+function rm_events!(s::Array{Float64}, width=2; printinfo=true)
   r = reshape(s, (:, 1))
   dr = diff(r)
+  printinfo && (eventcounter = 0)
 
   threshold = 4 * std(dr)
   startidx = width + 2
@@ -32,10 +37,12 @@ function rm_events!(s::Array{Float64}, width=2)
 
     if any(x -> x > threshold, dr[lowidx:i]) && any(x -> x < -threshold, dr[i:uppidx])
       r[i] = (r[lowidx-1] + r[uppidx+1])/2
+      printinfo && (eventcounter += 1)
     end
   end
 
   s = reshape(r, size(s))
+  printinfo && println("Removed $eventcounter events.")
   return s
 end
 
@@ -145,7 +152,7 @@ spectrum. If you want to select a specific calibration set the `date` keyword ar
 
 You can change the default wavelength for the visible light by passing a value to the `vis` keyword argument.
 """
-function get_ir_wavenumber(s::SFSpectrum; vis=VIS_WAVELENGTH, date=DateTime(get_attribute(s, "timestamp")))
+function get_ir_wavenumber(s::SFSpectrum; kwargs...)#vis=VIS_WAVELENGTH, date=DateTime(get_attribute(s, "timestamp")))
     1 ./ get_ir_wavelength(s; kwargs...) * 1e7
 end
 
