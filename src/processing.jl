@@ -161,12 +161,13 @@ end
 Get the parameter that changes during the measurement as a string
 """
 function get_variables(d::Array{SFSpectrum})
-    # Check if there is data
-    length(d) == 0 && return nothing
-    
-    keylist = d[1] |> get_metadata |> keys
 
     dict = Dict{String, AbstractArray}()
+
+    # Check if there is data
+    length(d) == 0 && return dict
+    
+    keylist = d[1] |> get_metadata |> keys
     
     for k in keylist
         vals = get_attribute(d, k)
@@ -202,12 +203,12 @@ end
 """
 Automated Processing.
 """
-function quick_process(d::Array{SFSpectrum})
+function quick_process(d::Array{SFSpectrum}; width=5)
     # 1. Get the variable of the Dataset
     vars = get_variables(d)
 
     # 2. Processing
-    rm_events!.(d)
+    rm_events!.(d, width)
     mean!.(d)
 
     λ = get_ir_wavelength(d[1])
