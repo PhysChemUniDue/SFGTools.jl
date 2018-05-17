@@ -79,6 +79,8 @@ function list_spectra(; exact=""::AbstractString,
         id = [df[:id]]))
   end
 
+  sort!(df)
+
   return df
 
 end
