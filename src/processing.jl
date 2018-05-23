@@ -22,12 +22,12 @@ function rm_events!(s::Array{SFSpectrum}, width=2; kwargs...)
   return s
 end
 
-function rm_events!(s::Array{Float64}, width=2; printinfo=true)
+function rm_events!(s::Array{Float64}, width=2; printinfo=true, minstd=4)
   r = reshape(s, (:, 1))
   dr = diff(r)
   printinfo && (eventcounter = 0)
 
-  threshold = 4 * std(dr)
+  threshold = minstd * std(dr)
   startidx = width + 2
   endidx = length(dr) - width
 
