@@ -9,6 +9,7 @@ include("spectraio.jl")
 include("processing.jl")
 
 export  SFSpectrum,
+        average,
         grab,
         list_spectra,
         load_spectra,
