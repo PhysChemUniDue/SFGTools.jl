@@ -20,15 +20,17 @@ Base.copy(s::SFSpectrum) = SFSpectrum(copy(s.id), copy(s.s))
 Combine all single spectra to a single one. Returns the mean counts
 per second.
 """
-function Base.mean!(s::SFSpectrum)
+function average(s::SFSpectrum{T,N}) where {T,N}
+  N == 3 || error("The number of dimensions of the spectrum has to be 3.")
   exptime = get_attribute(s, "ccd_exposure_time")::Float64
-  s.s = mean(s, 3) / exptime
-  for n = ndims(s):-1:1
-    if size(s, n) == 1
-      s.s = squeeze(s, n)
-    end
+  if size(s, 2) == 1 
+    n = SFSpectrum(s.id, Array{T,1}(size(s, 1)))
+    n.s = mean(s.s, 3)[:,1,1] / exptime
+  else
+    n = SFSpectrum(s.id, Array{T,2}(size(s, 1, 2)))
+    n.s = mean(s.s, 3)[:,:,1] / exptime
   end
-  return s
+  n
 end
 
 +(s::SFSpectrum, t::SFSpectrum) = s.s + t.s

@@ -47,6 +47,25 @@ function rm_events!(s::Array{Float64}, width=2; printinfo=true, minstd=4)
 end
 
 
+
+"""
+Combine all single spectra to a single one. Returns the mean counts
+per second.
+"""
+function average(s::SFSpectrum{T,N}) where {T,N}
+  N == 3 || error("The number of dimensions of the spectrum has to be 3.")
+  exptime = get_attribute(s, "ccd_exposure_time")::Float64
+  if size(s, 2) == 1 
+    n = SFSpectrum(s.id, Array{T,1}(size(s, 1)))
+    n.s = mean(s.s, 3)[:,1,1] / exptime
+  else
+    n = SFSpectrum(s.id, Array{T,2}(size(s, 1, 2)))
+    n.s = mean(s.s, 3)[:,:,1] / exptime
+  end
+  n
+end
+
+
 """
 Substract the blind counts stored in `bg` from each of the spectra of `s`.
 """

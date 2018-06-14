@@ -90,8 +90,6 @@ function list_spectra(str::String)
     list_spectra()
 end
 
-@deprecate(list_spectra(str::String), list_spectra())
-
 """
 Make a data file that contains information where to find spectra connected to
 an ID. All spectra are internally referenced by this id. `dir` is the main data
