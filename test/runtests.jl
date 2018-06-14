@@ -20,7 +20,7 @@ end
 
 function loadtest()
     spectrum = load_spectra(63654390286607)
-    @test typeof(spectrum) == SFSpectrum
+    @test typeof(spectrum) == SFGTools.SFSpectrum{Float64,3}
     spectrum
 end
 
@@ -28,9 +28,17 @@ function attribute_test(spectrum)
     meta = get_metadata(spectrum)
     @test typeof(meta) == Dict{String,Any}
     attr = get_attribute(spectrum, "ccd_exposure_time")
-    @test attr = 0.5
+    @test attr == 0.5
+end
+
+function blindcounts_test()
+    blind_spectrum = SFSpectrum(123, rand(512,1,1000) .+ 700.0)
+    spectrum = SFSpectrum(456, rand(512,1,5) .+ 710.0)
+    rm_blindcounts!(spectrum, blind_spectrum)
+    @test 9.0 < mean(spectrum.s) < 11.0
 end
 
 @testset "list_spectra Tests" begin listtest() end
-@testset "load_spectra Tests" begin spectrum = loadtest() end
+@testset "load_spectra Tests" begin global spectrum = loadtest() end
 @testset "Attribute Tests" begin attribute_test(spectrum) end
+@testset "Blindcounts Removal" begin blindcounts_test() end
