@@ -22,7 +22,7 @@ function rm_events!(s::Array{SFSpectrum}, width=2; kwargs...)
   return s
 end
 
-function rm_events!(s::Array{Float64}, width=2; printinfo=true, minstd=5)
+function rm_events!(s::Array{Float64}, width=3; printinfo=true, minstd=5)
   r = reshape(s, (:, 1))
   dr = diff(r)
   printinfo && (eventcounter = 0)
