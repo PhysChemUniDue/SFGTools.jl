@@ -22,21 +22,22 @@ function rm_events!(s::Array{SFSpectrum}, width=2; kwargs...)
   return s
 end
 
-function rm_events!(s::Array{Float64}, width=2; printinfo=true, minstd=4)
+function rm_events!(s::Array{Float64}, width=3; printinfo=true, minstd=5)
   r = reshape(s, (:, 1))
   dr = diff(r)
   printinfo && (eventcounter = 0)
 
   threshold = minstd * std(dr)
-  startidx = width + 2
-  endidx = length(dr) - width
+  startidx = width + 1
+  endidx = length(dr)
 
   for i = startidx:endidx
     lowidx = i - width
-    uppidx = i + width - 1
 
-    if any(x -> x > threshold, dr[lowidx:i]) && any(x -> x < -threshold, dr[i:uppidx])
-      r[i] = (r[lowidx-1] + r[uppidx+1])/2
+    if any(x -> x > threshold, dr[lowidx:i]) && any(x -> x < -threshold, dr[i])
+      tmp = dr[lowidx:i]
+      width_real = width - indmax(tmp) + 1
+      r[i-width_real+1:i] = (r[i-width_real] + r[i+1])/2
       printinfo && (eventcounter += 1)
     end
   end
@@ -55,7 +56,7 @@ per second.
 function average(s::SFSpectrum{T,N}) where {T,N}
   N == 3 || error("The number of dimensions of the spectrum has to be 3.")
   exptime = get_attribute(s, "ccd_exposure_time")::Float64
-  if size(s, 2) == 1 
+  if size(s, 2) == 1
     n = SFSpectrum(s.id, Array{T,1}(size(s, 1)))
     n.s = mean(s.s, 3)[:,1,1] / exptime
   else
@@ -77,7 +78,7 @@ function rm_blindcounts!(s::SFSpectrum, bg::SFSpectrum)
 
     # Mean counts of background
     bg_counts = mean(bg.s, 3)
-    
+
     # Subtract the background from each spectrum of s
     for i = 1:size(s.s, 3)
         s.s[:,:,i] -= bg_counts
@@ -122,7 +123,7 @@ The appropriate calibration curve of the spectrometer is automatically selected 
 spectrum. If you want to select a specific calibration set the `date` keyword argument to something like
 `date=DateTime("2011-11-11")` to select the calibration curve that was valid on that specific date.
 """
-function get_wavelength(s::SFSpectrum; 
+function get_wavelength(s::SFSpectrum;
                         date = DateTime(get_attribute(s, "timestamp")))
     const N_PIXEL = 512
 
@@ -205,9 +206,9 @@ function get_variables(d::Array{SFSpectrum})
 
     # Check if there is data
     length(d) == 0 && return dict
-    
+
     keylist = d[1] |> get_metadata |> keys
-    
+
     for k in keylist
         vals = get_attribute(d, k)
         uvals = unique(vals)
