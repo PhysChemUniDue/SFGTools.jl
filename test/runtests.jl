@@ -41,20 +41,13 @@ end
 function save_mat_test(spectra)
     success = false
     try
-        save_mat("/tmp/" * randstring(), spectra)
+        save_mat(tempname(), spectra)
         success = true
     catch
         success = false
     end
     @test success == true
 end
-
-@testset "list_spectra Tests" begin listtest() end
-@testset "load_spectra Tests" begin global spectrum = loadtest() end
-@testset "Attribute Tests" begin attribute_test(spectrum) end
-@testset "Blindcounts Removal" begin blindcounts_test() end
-spectra = makespectraarray(spectrum[1])
-@testset "MAT Saving" begin save_mat_test(spectra) end
 
 function makespectraarray(spectrum::SFSpectrum)
     spectra = Array{SFSpectrum,1}(size(spectrum,2))
@@ -63,4 +56,12 @@ function makespectraarray(spectrum::SFSpectrum)
     end
     spectra
 end
+
+@testset "list_spectra Tests" begin listtest() end
+@testset "load_spectra Tests" begin global spectrum = loadtest()[1] end
+@testset "Attribute Tests" begin attribute_test(spectrum) end
+@testset "Blindcounts Removal" begin blindcounts_test() end
+spectra = makespectraarray(spectrum)
+@testset "MAT Saving" begin save_mat_test(spectra) end
+
 
