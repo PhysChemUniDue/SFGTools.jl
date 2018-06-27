@@ -1,6 +1,8 @@
 import FileIO.load
 
 """
+    list_spectra(; exact="", inexact="", date::Tuple{Int64,Int64,Int64}, group=false)
+
 List available spectra.
 First `grab(datafolder)` the spectra to genereate a `.spectralist` file. You can
 optionally pass the path to the `.spectralist` file in the arguments.
@@ -91,6 +93,8 @@ function list_spectra(str::String)
 end
 
 """
+    grab(dir="./"; getall=false)
+
 Make a data file that contains information where to find spectra connected to
 an ID. All spectra are internally referenced by this id. `dir` is the main data
 directory (`dir/2011-01-31/Name/...`).
@@ -98,10 +102,6 @@ directory (`dir/2011-01-31/Name/...`).
 By default this function writes only newly found spectra to the .spectralist file.
 If you want to rewrite the whole file pass `getall=true` as a keyword argument
 to the function.
-
-```julia
-julia> grab(directory; getall=true)
-```
 """
 function grab(dir="./"; getall=false)
 
@@ -145,7 +145,9 @@ function grab(dir="./"; getall=false)
 end
 
 """
-Load the spectra specified by `id`. `id` can be an Int64 or Array{Int64}.
+    load_spectra(id::Int64)
+
+Load the spectra specified by `id`.
 """
 function load_spectra(id::Int64)
   # Load grabbed data
@@ -154,9 +156,14 @@ function load_spectra(id::Int64)
   # Load the spectrum files
   s = read_as_3D(dir, Float64)
 
-  sfspectrum = SFSpectrum(id, s)
+  sfspectrum = SFSpectrum[SFSpectrum(id, s)]
 end
 
+"""
+    load_spectra(id::Array{Int64})
+
+Load the spectra specified by `id`.
+"""
 function load_spectra(id::AbstractArray{Int64})
   sfspectra = SFSpectrum[]
   for i in id
@@ -227,10 +234,13 @@ function read_as_3D(directory::AbstractString, astype=Float64)
     return C
 end
 
-
+"""
+Get the directory of a spectrum with a given id. If the ID does not exist return an empty string.
+"""
 function getdir(id::Int64)
     data = readdlm(".spectralist"; comments=false)
     idx = findin(data, id)
+    isempty(idx) && (return dir = "")
     dir = data[idx,:][3]
 end
 
@@ -248,6 +258,9 @@ end
 
 
 function get_metadata(path::AbstractString)
+  
+  path == "" && (return Dict())
+
   if splitext(path)[2] != ".txt"
       mfile = searchdir(path, "data.txt")[1]
       path = joinpath(path, mfile)
@@ -274,32 +287,44 @@ end
 Save Spectra in a Matlab file.
 """
 function save_mat(filename::AbstractString, s::SFSpectrum)
-    save_mat(filename, [s])
+    save_mat(filename, SFSpectrum[s])
 end
 
 function save_mat(filename::AbstractString, s::Array{SFSpectrum})
     # Check if filename has a proper extension
-    if splitext(filename)[2] != ".mat"
+    if splitext(filename)[end] != ".mat"
         filename *= ".mat"
     end
 
     f = matopen(filename, "w")
+
+    length(s)
     
     for i = 1:length(s)
 
         # Put Stuff in dict
+        name = ""
         try
             name = get_attribute(s[i], "name")
         catch
-            name = get_attribute(s[i], "timestamp")
+            name = string(s[i].id)
         end
 
-        data = Dict(
-            "name" => get_attribute(s[i], "name"),
-            "signal" => mean(s[i]),
-            "wavelength" => get_ir_wavelength(s[i]),
-            "wavenumber" => get_ir_wavenumber(s[i]),
-        )
+        data = Dict()
+        try 
+            data = Dict(
+                "name" => get_attribute(s[i], "name"),
+                "signal" => s[i].s,
+                "wavelength" => get_ir_wavelength(s[i]),
+                "wavenumber" => get_ir_wavenumber(s[i]),
+            )
+        catch
+            data = Dict(
+                "name" => name,
+                "signal" => s[i].s
+            )
+        end
+        data
 
         # Write to file
         write(f, "data$i", data)

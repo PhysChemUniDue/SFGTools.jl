@@ -20,7 +20,7 @@ end
 
 function loadtest()
     spectrum = load_spectra(63654390286607)
-    @test typeof(spectrum) == SFGTools.SFSpectrum{Float64,3}
+    @test typeof(spectrum) == Array{SFGTools.SFSpectrum,1}
     spectrum
 end
 
@@ -38,7 +38,29 @@ function blindcounts_test()
     @test 9.0 < mean(spectrum.s) < 11.0
 end
 
+function save_mat_test(spectra)
+    success = false
+    try
+        save_mat("/tmp/" * randstring(), spectra)
+        success = true
+    catch
+        success = false
+    end
+    @test success == true
+end
+
 @testset "list_spectra Tests" begin listtest() end
 @testset "load_spectra Tests" begin global spectrum = loadtest() end
 @testset "Attribute Tests" begin attribute_test(spectrum) end
 @testset "Blindcounts Removal" begin blindcounts_test() end
+spectra = makespectraarray(spectrum[1])
+@testset "MAT Saving" begin save_mat_test(spectra) end
+
+function makespectraarray(spectrum::SFSpectrum)
+    spectra = Array{SFSpectrum,1}(size(spectrum,2))
+    for i = 1:size(spectrum, 2)
+        spectra[i] = SFSpectrum(spectrum.id, spectrum[:,i,1])
+    end
+    spectra
+end
+
