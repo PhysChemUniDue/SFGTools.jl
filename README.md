@@ -15,7 +15,7 @@ Use the module via
 ```julia
 using SFGTools
 ```
-Generate a `.spectralist` file in your current director by executing
+Generate a `.spectralist` file in your current directory by executing
 ```julia
 julia> grab("./mydatadir")
 ```
@@ -27,9 +27,9 @@ julia> df = list_spectra()
 ```
 This returns a dataframe with some basic information about the spectra. You can also get a filtered dataframe by applying filter:
 
-* ```exact="name"```        → Filters for the exact name of the spectrum
+* ```exact="name"```          → Filters for the exact name of the spectrum
 * ```inexact="partofname"```  → Filters for matching parts in the spectrums name
-* ```date=(2011, 01, 31)```      → Filters for a specific date 
+* ```date=(2011, 1, 31)```      → Filters for a specific date 
 * ```group=true```      → Group spectra by name
 
 Example:
@@ -38,7 +38,7 @@ julia> df = list_spectra(inexact="Au", d=(2011, 11, 1))
 ```
 To get all the spectra whose name contains "Au" from the 1st of November 2011.
 
-To load the spectra you want you have to get their IDs. You can do this manually or get them from the filtered dataframe.
+To load the spectra you want you have to get their IDs. You can do this manually or get them from the filtered `DataFrame`.
 ```julia
 julia> id = df[:id]
 julia> data = load_spectra(id)
@@ -50,13 +50,15 @@ The loaded `data` is an `SFSpectrum` object or an array of `SFSpectrum` objects 
 * `id`: The unique ID of the spectrum (this is built from the timestamp of the first spectrum in the series)
 * `s`: The spectrum as a 3D Matrix (the first dimension corresponds to the horizontal on the CCD, the second dimension to the vertical axis of the CCD and the third dimension to the number of the spectrum in the series)
 
+The `SFSpectrum` type is a subtype of `AbstractArray{Number}`. All array operations should in theory be possible.
+
 The `id` enables us to load metadata of the spectrum easily by executing
 ```julia
 julia> get_metadata(data[1])
 ```
 or getting attributes of every spectrum in the series:
 ```julia
-julia> get_attribute(data, "ccd_temperature")
+julia> get_attribute.(data, "ccd_temperature")
 ```
 
 You can get get the IR wavelengths/wavenumbers corresponding to the pixels via
