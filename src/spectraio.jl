@@ -1,4 +1,5 @@
 import FileIO.load
+using CSV
 
 """
     list_spectra(; exact="", inexact="", date::Tuple{Int64,Int64,Int64}, group=false)
@@ -22,7 +23,6 @@ function list_spectra(; exact=""::AbstractString,
                         date=(0,0,0)::Tuple{Int64,Int64,Int64},
                         group=false)
 
-  const N_PIXEL = 512
   dir = "./"
   
   spectrafile = joinpath(dir, ".spectralist")
@@ -32,33 +32,7 @@ function list_spectra(; exact=""::AbstractString,
     error("The file $spectrafile does not exist.")
   end
 
-  idlist = convert(Array{Int64}, dat[:,1])
-  namelist = convert(Array{AbstractString}, dat[:,2])
-  dirlist = convert(Array{AbstractString}, dat[:,3])
-  datelist = DateTime[]
-  sizelist = Array{Int64,1}[]
-  numlist = Int64[]
-
-  for dir in dirlist
-      mfilelist = searchdir(dir, "data.txt")
-      mfile = mfilelist[1]
-      mdict = get_metadata(joinpath(dir, mfile))
-
-      sz = Int64[N_PIXEL/mdict["x_binning"], N_PIXEL/mdict["y_binning"], length(mfilelist)]
-      d = DateTime(mdict["timestamp"])
-
-      push!(sizelist, sz)
-      push!(datelist, d)
-      push!(numlist, parse(Int64, splitdir(splitdir(dir)[1])[2]))
-  end
-
-  df = DataFrame(
-    id = idlist,
-    name = namelist,
-    number = numlist,
-    date = datelist,
-    sizes = sizelist,
-  )
+  df = CSV.read(spectrafile)
 
   # Filter the dataframe
   if exact != ""
@@ -119,6 +93,9 @@ function grab(dir="./"; getall=false)
     idlist = Int64[]
     namelist = String[]
     dirlist = String[]
+    datelist = DateTime[]
+    sizelist = Array{Int64}[]
+    numlist = Int64[]
 
     for (root, dirs, files) in walkdir(dir)
         for dir in dirs
@@ -132,16 +109,24 @@ function grab(dir="./"; getall=false)
                     push!(idlist, id)
                     push!(namelist, splitdir(splitdir(root)[1])[2])
                     push!(dirlist, joinpath(abspath(root), dir))
+                    push!(datelist, DateTime(mdict["timestamp"]))
+                    push!(sizelist, Int64[N_PIXEL/mdict["x_binning"], N_PIXEL/mdict["y_binning"], length(mlist)])
+                    push!(numlist, parse(Int64, splitdir(splitdir(dirlist[end])[1])[2]))
                 end
             end
         end
     end
 
-    println("Collected $(length(idlist)) spectra. ($(length(idexisting) + length(idlist)) overall)")
-    # writedlm(".spectralist", [idlist namelist dirlist])
+    df = DataFrame(id=idlist, name=namelist, path=dirlist, date=datelist, sizes=sizelist, number=numlist)
+
     open(".spectralist", "a") do f
-        writedlm(f, [idlist namelist dirlist])
+        # writedlm(f, [idlist namelist dirlist datelist sizelist numlist])
+        CSV.write(f, df)
     end
+
+    println("Collected $(length(idlist)) spectra. ($(length(idexisting) + length(idlist)) overall)")
+
+
 end
 
 """
@@ -217,8 +202,7 @@ is_attribute(s::SFSpectrum, attr::AbstractString) = is_attribute(s.id, attr)
 """
 Read tiff files and put them in a 3D matrix
 """
-function read_as_3D(directory::AbstractString, astype=Float64)
-    path = joinpath(directory)
+function read_as_3D(path::AbstractString, astype=Float64)
     filelist = searchdir(path, ".tiff")
     if isempty(filelist)
         println("Could not find a .tiff file in $directory.")
@@ -238,10 +222,10 @@ end
 Get the directory of a spectrum with a given id. If the ID does not exist return an empty string.
 """
 function getdir(id::Int64)
-    data = readdlm(".spectralist"; comments=false)
-    idx = findin(data, id)
-    isempty(idx) && (return dir = "")
-    dir = data[idx,:][3]
+    df = CSV.read(".spectralist")
+    idx = findin(df[:id], id)
+    isempty(idx) && error("Could not find spectrum with id $id.")
+    dir = df[:path][idx[1]]
 end
 
 

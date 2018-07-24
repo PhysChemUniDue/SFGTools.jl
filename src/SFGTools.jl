@@ -8,6 +8,8 @@ include("sfspectrum.jl")
 include("spectraio.jl")
 include("processing.jl")
 
+const N_PIXEL = 512
+
 export  SFSpectrum,
         average,
         grab,
