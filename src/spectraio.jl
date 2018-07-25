@@ -32,7 +32,7 @@ function list_spectra(; exact=""::AbstractString,
     error("The file $spectrafile does not exist.")
   end
 
-  df = CSV.read(spectrafile)
+  df = CSV.read(spectrafile; allowmissing=:none)
 
   # Filter the dataframe
   if exact != ""
@@ -222,7 +222,7 @@ end
 Get the directory of a spectrum with a given id. If the ID does not exist return an empty string.
 """
 function getdir(id::Int64)
-    df = CSV.read(".spectralist")
+    df = CSV.read(".spectralist"; allowmissing=:none)
     idx = findin(df[:id], id)
     isempty(idx) && error("Could not find spectrum with id $id.")
     dir = df[:path][idx[1]]
