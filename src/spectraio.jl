@@ -1,6 +1,6 @@
 import FileIO.load
 using CSV
-asdf
+
 """
     list_spectra(; exact="", inexact="", date::Tuple{Int64,Int64,Int64}, group=false)
 
@@ -210,12 +210,13 @@ function read_as_3D(path::AbstractString, astype=Float64)
     end
     I = load(joinpath(path, filelist[1]))
     C = Array{UInt16,3}(size(I,1), size(I,2), length(filelist))
-    for (i, file) in enumerate(filelist)
-        I = load(joinpath(path, file))
+    C[:,:,1] = reinterpret(UInt16, I)
+    @inbounds for i = 2:length(filelist)
+        I = load(joinpath(path, filelist[i]))
         C[:,:,i] = reinterpret(UInt16, I)
-        C = convert(Array{astype}, C)
     end
-    return C
+    F = C |> Array{astype,3}
+    return F
 end
 
 """
