@@ -86,8 +86,8 @@ function grab(dir="./"; getall=false)
         end
         idexisting = Int64[]
     else
-        content = readdlm(".spectralist")
-        idexisting = convert.(Int64, content[:,1])
+        df = CSV.read(".spectralist")
+        idexisting = convert.(Int64, df[:id])
     end
 
     idlist = Int64[]
