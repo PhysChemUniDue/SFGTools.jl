@@ -1,4 +1,7 @@
 import FileIO.load
+using CSV
+using Dates
+using DelimitedFiles
 
 """
     list_spectra(; exact="", inexact="", date::Tuple{Int64,Int64,Int64}, group=false)
@@ -22,7 +25,6 @@ function list_spectra(; exact=""::AbstractString,
                         date=(0,0,0)::Tuple{Int64,Int64,Int64},
                         group=false)
 
-  const N_PIXEL = 512
   dir = "./"
   
   spectrafile = joinpath(dir, ".spectralist")
@@ -32,33 +34,7 @@ function list_spectra(; exact=""::AbstractString,
     error("The file $spectrafile does not exist.")
   end
 
-  idlist = convert(Array{Int64}, dat[:,1])
-  namelist = convert(Array{AbstractString}, dat[:,2])
-  dirlist = convert(Array{AbstractString}, dat[:,3])
-  datelist = DateTime[]
-  sizelist = Array{Int64,1}[]
-  numlist = Int64[]
-
-  for dir in dirlist
-      mfilelist = searchdir(dir, "data.txt")
-      mfile = mfilelist[1]
-      mdict = get_metadata(joinpath(dir, mfile))
-
-      sz = Int64[N_PIXEL/mdict["x_binning"], N_PIXEL/mdict["y_binning"], length(mfilelist)]
-      d = DateTime(mdict["timestamp"])
-
-      push!(sizelist, sz)
-      push!(datelist, d)
-      push!(numlist, parse(Int64, splitdir(splitdir(dir)[1])[2]))
-  end
-
-  df = DataFrame(
-    id = idlist,
-    name = namelist,
-    number = numlist,
-    date = datelist,
-    sizes = sizelist,
-  )
+  df = CSV.read(spectrafile; allowmissing=:none)
 
   # Filter the dataframe
   if exact != ""
@@ -66,7 +42,7 @@ function list_spectra(; exact=""::AbstractString,
   end
 
   if inexact != ""
-      df = df[contains.(lowercase.(df[:name]), lowercase(inexact)), :]
+      df = df[occursin.(lowercase(inexact), lowercase.(df[:name])), :]
   end
 
   if !all(iszero.(date))
@@ -102,23 +78,26 @@ directory (`dir/2011-01-31/Name/...`).
 By default this function writes only newly found spectra to the .spectralist file.
 If you want to rewrite the whole file pass `getall=true` as a keyword argument
 to the function.
+
+Returns the number of added spectra and the number of spectra in total.
 """
 function grab(dir="./"; getall=false)
 
-    # Check if the .spectralist file exists. If not create it.
+    # Check if the .spectralist file exists.
     # If it exist read its contents.
     if !isfile(".spectralist") || getall
-        f = open(".spectralist", "w") do f
-        end
         idexisting = Int64[]
     else
-        content = readdlm(".spectralist")
-        idexisting = convert.(Int64, content[:,1])
+        df = CSV.read(".spectralist")
+        idexisting = convert.(Int64, df[:id])
     end
 
     idlist = Int64[]
     namelist = String[]
     dirlist = String[]
+    datelist = DateTime[]
+    sizelist = Array{Int64}[]
+    numlist = Int64[]
 
     for (root, dirs, files) in walkdir(dir)
         for dir in dirs
@@ -132,16 +111,32 @@ function grab(dir="./"; getall=false)
                     push!(idlist, id)
                     push!(namelist, splitdir(splitdir(root)[1])[2])
                     push!(dirlist, joinpath(abspath(root), dir))
+                    push!(datelist, DateTime(mdict["timestamp"]))
+                    push!(sizelist, Int64[N_PIXEL/mdict["x_binning"], N_PIXEL/mdict["y_binning"], length(mlist)])
+                    push!(numlist, parse(Int64, splitdir(splitdir(dirlist[end])[1])[2]))
                 end
             end
         end
     end
 
-    println("Collected $(length(idlist)) spectra. ($(length(idexisting) + length(idlist)) overall)")
-    # writedlm(".spectralist", [idlist namelist dirlist])
-    open(".spectralist", "a") do f
-        writedlm(f, [idlist namelist dirlist])
+    df = DataFrame(id=idlist, name=namelist, path=dirlist, date=datelist, sizes=sizelist, number=numlist)
+
+    # open(".spectralist", "a") do f
+    #     # writedlm(f, [idlist namelist dirlist datelist sizelist numlist])
+    #     CSV.write(f, df)
+    # end
+
+    if !isfile(".spectralist") || getall
+        CSV.write(".spectralist", df; append=false)
+    else
+        CSV.write(".spectralist", df; append=true)
     end
+
+    # println("Collected $(length(idlist)) spectra. ($(length(idexisting) + length(idlist)) overall)")
+
+    length(idlist), length(idexisting) + length(idlist)
+
+
 end
 
 """
@@ -149,12 +144,12 @@ end
 
 Load the spectra specified by `id`.
 """
-function load_spectra(id::Int64)
+function load_spectra(id::Int64, astype=Float64)
   # Load grabbed data
   dir = getdir(id)
 
   # Load the spectrum files
-  s = read_as_3D(dir, Float64)
+  s = read_as_3D(dir, astype)
 
   sfspectrum = SFSpectrum[SFSpectrum(id, s)]
 end
@@ -164,10 +159,10 @@ end
 
 Load the spectra specified by `id`.
 """
-function load_spectra(id::AbstractArray{Int64})
+function load_spectra(id::AbstractArray{Int64}, astype=Float64)
   sfspectra = Array{SFSpectrum,1}(length(id))
   for i in 1:length(id)
-    sfspectrum = load_spectra(id[i])
+    sfspectrum = load_spectra(id[i], astype)
     sfspectra[i] = sfspectrum[1]
   end
   return sfspectra
@@ -217,31 +212,31 @@ is_attribute(s::SFSpectrum, attr::AbstractString) = is_attribute(s.id, attr)
 """
 Read tiff files and put them in a 3D matrix
 """
-function read_as_3D(directory::AbstractString, astype=Float64)
-    path = joinpath(directory)
+function read_as_3D(path::AbstractString, astype=Float64)
     filelist = searchdir(path, ".tiff")
     if isempty(filelist)
         println("Could not find a .tiff file in $directory.")
         return
     end
     I = load(joinpath(path, filelist[1]))
-    C = Array{UInt16,3}(size(I,1), size(I,2), length(filelist))
-    for (i, file) in enumerate(filelist)
-        I = load(joinpath(path, file))
+    C = Array{UInt16,3}(undef, size(I,1), size(I,2), length(filelist))
+    C[:,:,1] = reinterpret(UInt16, I)
+    @inbounds for i = 2:length(filelist)
+        I = load(joinpath(path, filelist[i]))
         C[:,:,i] = reinterpret(UInt16, I)
-        C = convert(Array{astype}, C)
     end
-    return C
+    F = C |> Array{astype,3}
+    return F
 end
 
 """
 Get the directory of a spectrum with a given id. If the ID does not exist return an empty string.
 """
 function getdir(id::Int64)
-    data = readdlm(".spectralist"; comments=false)
-    idx = findin(data, id)
-    isempty(idx) && (return dir = "")
-    dir = data[idx,:][3]
+    df = CSV.read(".spectralist"; allowmissing=:none)
+    idx = findall((in)(id), df[:id])
+    isempty(idx) && error("Could not find spectrum with id $id.")
+    dir = df[:path][idx[1]]
 end
 
 
@@ -279,7 +274,7 @@ end
 
 
 function searchdir(directory::AbstractString, key::AbstractString)
-    filter!(x->contains(x, key), readdir(directory))
+    filter!(x->occursin(key, x), readdir(directory))
 end
 
 
