@@ -1,8 +1,9 @@
 using Test
 using DataFrames
 using SFGTools
+import Statistics: mean
 
-const SAMPLE_DATA_DIR = Pkg.dir("SFGTools") * "/test/sampledata/"
+const SAMPLE_DATA_DIR = joinpath(@__DIR__, "sampledata/")
 
 function listtest()
     grab(SAMPLE_DATA_DIR; getall=true)
@@ -55,7 +56,7 @@ end
 # end
 
 function makespectraarray(spectrum::SFSpectrum)
-    spectra = Array{SFSpectrum,1}(size(spectrum,2))
+    spectra = Array{SFSpectrum,1}(undef, size(spectrum,2))
     for i = 1:size(spectrum, 2)
         spectra[i] = SFSpectrum(spectrum.id, spectrum[:,i,1])
     end
