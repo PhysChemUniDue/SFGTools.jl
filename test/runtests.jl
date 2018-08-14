@@ -6,6 +6,7 @@ const SAMPLE_DATA_DIR = Pkg.dir("SFGTools") * "/test/sampledata/"
 
 function listtest()
     grab(SAMPLE_DATA_DIR; getall=true)
+    grab(SAMPLE_DATA_DIR)
     df = list_spectra()
     @test size(df,1) == 118
     df = list_spectra(date=(2018,2,15))
@@ -19,8 +20,12 @@ function listtest()
 end
 
 function loadtest()
+    spectrum_integer = load_spectra(63654390286607, UInt16)
+    @test spectrum_integer[1][1] == 0x02be
+    @test typeof(spectrum_integer) == Array{SFGTools.SFSpectrum,1}
     spectrum = load_spectra(63654390286607)
     @test typeof(spectrum) == Array{SFGTools.SFSpectrum,1}
+    @test spectrum[1][1] == 702.0
     spectrum
 end
 

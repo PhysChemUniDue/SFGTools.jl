@@ -76,14 +76,14 @@ directory (`dir/2011-01-31/Name/...`).
 By default this function writes only newly found spectra to the .spectralist file.
 If you want to rewrite the whole file pass `getall=true` as a keyword argument
 to the function.
+
+Returns the number of added spectra and the number of spectra in total.
 """
 function grab(dir="./"; getall=false)
 
-    # Check if the .spectralist file exists. If not create it.
+    # Check if the .spectralist file exists.
     # If it exist read its contents.
     if !isfile(".spectralist") || getall
-        f = open(".spectralist", "w") do f
-        end
         idexisting = Int64[]
     else
         df = CSV.read(".spectralist")
@@ -119,12 +119,20 @@ function grab(dir="./"; getall=false)
 
     df = DataFrame(id=idlist, name=namelist, path=dirlist, date=datelist, sizes=sizelist, number=numlist)
 
-    open(".spectralist", "a") do f
-        # writedlm(f, [idlist namelist dirlist datelist sizelist numlist])
-        CSV.write(f, df)
+    # open(".spectralist", "a") do f
+    #     # writedlm(f, [idlist namelist dirlist datelist sizelist numlist])
+    #     CSV.write(f, df)
+    # end
+
+    if !isfile(".spectralist") || getall
+        CSV.write(".spectralist", df; append=false)
+    else
+        CSV.write(".spectralist", df; append=true)
     end
 
-    println("Collected $(length(idlist)) spectra. ($(length(idexisting) + length(idlist)) overall)")
+    # println("Collected $(length(idlist)) spectra. ($(length(idexisting) + length(idlist)) overall)")
+
+    length(idlist), length(idexisting) + length(idlist)
 
 
 end
@@ -134,12 +142,12 @@ end
 
 Load the spectra specified by `id`.
 """
-function load_spectra(id::Int64)
+function load_spectra(id::Int64, astype=Float64)
   # Load grabbed data
   dir = getdir(id)
 
   # Load the spectrum files
-  s = read_as_3D(dir, Float64)
+  s = read_as_3D(dir, astype)
 
   sfspectrum = SFSpectrum[SFSpectrum(id, s)]
 end
@@ -149,10 +157,10 @@ end
 
 Load the spectra specified by `id`.
 """
-function load_spectra(id::AbstractArray{Int64})
+function load_spectra(id::AbstractArray{Int64}, astype=Float64)
   sfspectra = Array{SFSpectrum,1}(length(id))
   for i in 1:length(id)
-    sfspectrum = load_spectra(id[i])
+    sfspectrum = load_spectra(id[i], astype)
     sfspectra[i] = sfspectrum[1]
   end
   return sfspectra
