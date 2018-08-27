@@ -160,7 +160,7 @@ end
 Load the spectra specified by `id`.
 """
 function load_spectra(id::AbstractArray{Int64}, astype=Float64)
-  sfspectra = Array{SFSpectrum,1}(length(id))
+  sfspectra = Array{SFSpectrum,1}(undef, length(id))
   for i in 1:length(id)
     sfspectrum = load_spectra(id[i], astype)
     sfspectra[i] = sfspectrum[1]
