@@ -1,4 +1,4 @@
-import Statistics: mean
+import Statistics: mean, std
 
 const VIS_WAVELENGTH = 512.4  # According to service protocol of May 2018
 
@@ -26,7 +26,7 @@ end
 
 function rm_events!(s::Array{Float64}, width=3; printinfo=true, minstd=5)
   r = reshape(s, (:, 1))
-  dr = diff(r)
+  dr = diff(r, dims=1)
   printinfo && (eventcounter = 0)
 
   threshold = minstd * std(dr)
@@ -38,8 +38,8 @@ function rm_events!(s::Array{Float64}, width=3; printinfo=true, minstd=5)
 
     if any(x -> x > threshold, dr[lowidx:i]) && any(x -> x < -threshold, dr[i])
       tmp = dr[lowidx:i]
-      width_real = width - indmax(tmp) + 1
-      r[i-width_real+1:i] = (r[i-width_real] + r[i+1])/2
+      width_real = width - argmax(tmp) + 1
+      r[i-width_real+1:i] .= (r[i-width_real] + r[i+1])/2
       printinfo && (eventcounter += 1)
     end
   end
