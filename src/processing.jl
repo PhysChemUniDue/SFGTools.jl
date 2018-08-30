@@ -153,7 +153,7 @@ function get_wavelength(s::SFSpectrum;
     first_pixel_wl = λc - (num_points/2 - 1/2) * pλ * x_binning
     last_pixel_wl  = λc + (num_points/2 - 1/2) * pλ * x_binning
 
-    wl_range = linspace(first_pixel_wl, last_pixel_wl, num_points)
+    wl_range = range(first_pixel_wl, stop=last_pixel_wl, length=num_points)
     wl = collect(wl_range)
 
 end
