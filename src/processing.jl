@@ -177,7 +177,7 @@ Return the wavelength of the corresponding infrared light in nm.
 function get_ir_wavelength(s::SFSpectrum; vis=VIS_WAVELENGTH, date=DateTime(get_attribute(s, "timestamp")))
 
     function sf2ir(sf, vis)
-        1 ./ (1 ./ sf - 1 ./ vis)
+        1 ./ (1 ./ sf .- 1 ./ vis)
     end
 
     sf_wavelength = get_wavelength(s; date=date)
