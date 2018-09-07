@@ -281,7 +281,7 @@ function get_metadata(path::AbstractString)
   
     if splitext(path)[2] != ".txt"
         mfiles = searchdir(path, "data.txt")
-        paths = Array{String}(size(mfiles))
+        paths = Array{String}(undef, size(mfiles, 1))
         [paths[i] = joinpath(path, mfiles[i]) for i = 1:length(mfiles)]
     else
         paths = [path]
@@ -298,7 +298,7 @@ function get_metadata(path::AbstractString)
           mdict[key] = value[i]
       end
     elseif length(mfiles) > 1
-      valuemat = Array{Any,2}(length(keys), length(mfiles))
+      valuemat = Array{Any,2}(undef, length(keys), length(mfiles))
       valuemat[:,1] = data[:,2]
       for i = 2:length(mfiles)
           data = readdlm(paths[i], '\t'; comments=false)
