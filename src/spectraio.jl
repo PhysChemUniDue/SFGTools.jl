@@ -252,25 +252,65 @@ function get_metadata(id::Int64)
 end
 
 
-function get_metadata(path::AbstractString)
+# function get_metadata(path::AbstractString)
   
-  path == "" && (return Dict())
+#   path == "" && (return Dict())
 
-  if splitext(path)[2] != ".txt"
-      mfile = searchdir(path, "data.txt")[1]
-      path = joinpath(path, mfile)
+#   if splitext(path)[2] != ".txt"
+#       mfile = searchdir(path, "data.txt")[1]
+#       path = joinpath(path, mfile)
+#   end
+#   data = readdlm(path, '\t'; comments=false)
+#   keys = data[:,1]
+#   values = data[:,2]
+
+#   mdict = Dict{String, Any}()
+#   for (i, key) in enumerate(keys)
+#       mdict[key] = values[i]
+#   end
+
+#   return mdict
+# end
+
+function get_metadata(path::AbstractString)
+
+    path == "" && (return Dict())
+  
+    mdict = Dict{String, Any}()
+    mfiles = Array{String}[]
+  
+    if splitext(path)[2] != ".txt"
+        mfiles = searchdir(path, "data.txt")
+        paths = Array{String}(size(mfiles))
+        [paths[i] = joinpath(path, mfiles[i]) for i = 1:length(mfiles)]
+    else
+        paths = [path]
+        mfiles = [path]
+    end
+  
+    values = Array{Any,2}
+    data = readdlm(paths[1], '\t'; comments=false)
+    keys = Array{String}
+    keys = data[:,1]
+    value = data[:,2]
+    if length(mfiles) == 1
+      for (i, key) in enumerate(keys)
+          mdict[key] = value[i]
+      end
+    elseif length(mfiles) > 1
+      valuemat = Array{Any,2}(length(keys), length(mfiles))
+      valuemat[:,1] = data[:,2]
+      for i = 2:length(mfiles)
+          data = readdlm(paths[i], '\t'; comments=false)
+          valuemat[:,i] = data[:,2]
+      end
+      for (i, key) in enumerate(keys)
+          mdict[key] = valuemat[i,:]
+      end
+    end
+  
+    return mdict
   end
-  data = readdlm(path, '\t'; comments=false)
-  keys = data[:,1]
-  values = data[:,2]
-
-  mdict = Dict{String, Any}()
-  for (i, key) in enumerate(keys)
-      mdict[key] = values[i]
-  end
-
-  return mdict
-end
 
 
 function searchdir(directory::AbstractString, key::AbstractString)
