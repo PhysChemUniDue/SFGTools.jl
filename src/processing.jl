@@ -57,11 +57,11 @@ function average(s::SFSpectrum{T,N}) where {T,N}
   N == 3 || error("The number of dimensions of the spectrum has to be 3.")
   exptime = get_attribute(s, "ccd_exposure_time")::Float64
   if size(s, 2) == 1
-    n = SFSpectrum(s.id, Array{T,1}(size(s, 1)))
-    n.s = mean(s.s, 3)[:,1,1] / exptime
+    n = SFSpectrum(s.id, Array{T,1}(undef, size(s, 1)))
+    n.s = mean(s, dims=3)[:,1,1] / exptime
   else
-    n = SFSpectrum(s.id, Array{T,2}(size(s, 1, 2)))
-    n.s = mean(s.s, 3)[:,:,1] / exptime
+    n = SFSpectrum(s.id, Array{T,2}(undef, (size(s, 1), size(s, 2)) ))
+    n.s = mean(s, dims=3)[:,:,1] / exptime
   end
   n
 end
@@ -129,7 +129,7 @@ function get_wavelength(s::SFSpectrum;
 
     λ0 = get_attribute(s, "spectrometer_wavelength")
     x_binning = get_attribute(s, "x_binning")
-    num_points = N_PIXEL / x_binning
+    num_points = N_PIXEL ÷ x_binning
 
     if date < DateTime("2018-05-14")
         # Calibration Parameters were determined in 2017-12-13_SpectrometerCalibration.ipynb
@@ -152,7 +152,7 @@ function get_wavelength(s::SFSpectrum;
     first_pixel_wl = λc - (num_points/2 - 1/2) * pλ * x_binning
     last_pixel_wl  = λc + (num_points/2 - 1/2) * pλ * x_binning
 
-    wl_range = linspace(first_pixel_wl, last_pixel_wl, num_points)
+    wl_range = range(first_pixel_wl, stop=last_pixel_wl, length=num_points)
     wl = collect(wl_range)
 
 end
