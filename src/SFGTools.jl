@@ -2,7 +2,7 @@ __precompile__()
 module SFGTools
 
 using DataFrames
-using MAT
+# using MAT
 
 include("sfspectrum.jl")
 include("spectraio.jl")
@@ -28,7 +28,7 @@ export  SFSpectrum,
         get_pump_delay,
         dlpos2t,
         get_variables,
-        quick_process,
-        save_mat
+        quick_process
+        # save_mat
 
 end

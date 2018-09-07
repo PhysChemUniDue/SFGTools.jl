@@ -1,5 +1,7 @@
 # SFGTools Overview
 
+** Outdated **
+
 ## Installation
 From the REPL do
 ```julia

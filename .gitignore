@@ -15,6 +15,9 @@ deps/deps.jl
 ### Sample Data ###
 .spectralist
 
+### Manifest File ###
+Manifest.toml
+
 ### macOS ###
 *.DS_Store
 .AppleDouble

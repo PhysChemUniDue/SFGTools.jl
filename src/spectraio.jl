@@ -1,5 +1,7 @@
 import FileIO.load
 using CSV
+using Dates
+using DelimitedFiles
 
 """
     list_spectra(; exact="", inexact="", date::Tuple{Int64,Int64,Int64}, group=false)
@@ -40,7 +42,7 @@ function list_spectra(; exact=""::AbstractString,
   end
 
   if inexact != ""
-      df = df[contains.(lowercase.(df[:name]), lowercase(inexact)), :]
+      df = df[occursin.(lowercase(inexact), lowercase.(df[:name])), :]
   end
 
   if !all(iszero.(date))
@@ -158,7 +160,7 @@ end
 Load the spectra specified by `id`.
 """
 function load_spectra(id::AbstractArray{Int64}, astype=Float64)
-  sfspectra = Array{SFSpectrum,1}(length(id))
+  sfspectra = Array{SFSpectrum,1}(undef, length(id))
   for i in 1:length(id)
     sfspectrum = load_spectra(id[i], astype)
     sfspectra[i] = sfspectrum[1]
@@ -217,7 +219,7 @@ function read_as_3D(path::AbstractString, astype=Float64)
         return
     end
     I = load(joinpath(path, filelist[1]))
-    C = Array{UInt16,3}(size(I,1), size(I,2), length(filelist))
+    C = Array{UInt16,3}(undef, size(I,1), size(I,2), length(filelist))
     C[:,:,1] = reinterpret(UInt16, I)
     @inbounds for i = 2:length(filelist)
         I = load(joinpath(path, filelist[i]))
@@ -232,7 +234,7 @@ Get the directory of a spectrum with a given id. If the ID does not exist return
 """
 function getdir(id::Int64)
     df = CSV.read(".spectralist"; allowmissing=:none)
-    idx = findin(df[:id], id)
+    idx = findall((in)(id), df[:id])
     isempty(idx) && error("Could not find spectrum with id $id.")
     dir = df[:path][idx[1]]
 end
@@ -272,7 +274,7 @@ end
 
 
 function searchdir(directory::AbstractString, key::AbstractString)
-    filter!(x->contains(x, key), readdir(directory))
+    filter!(x->occursin(key, x), readdir(directory))
 end
 
 

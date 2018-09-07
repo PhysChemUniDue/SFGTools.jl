@@ -1,3 +1,5 @@
+import Statistics: mean, std
+
 const VIS_WAVELENGTH = 512.4  # According to service protocol of May 2018
 
 
@@ -24,7 +26,7 @@ end
 
 function rm_events!(s::Array{Float64}, width=3; printinfo=true, minstd=5)
   r = reshape(s, (:, 1))
-  dr = diff(r)
+  dr = diff(r, dims=1)
   printinfo && (eventcounter = 0)
 
   threshold = minstd * std(dr)
@@ -36,8 +38,8 @@ function rm_events!(s::Array{Float64}, width=3; printinfo=true, minstd=5)
 
     if any(x -> x > threshold, dr[lowidx:i]) && any(x -> x < -threshold, dr[i])
       tmp = dr[lowidx:i]
-      width_real = width - indmax(tmp) + 1
-      r[i-width_real+1:i] = (r[i-width_real] + r[i+1])/2
+      width_real = width - argmax(tmp) + 1
+      r[i-width_real+1:i] .= (r[i-width_real] + r[i+1])/2
       printinfo && (eventcounter += 1)
     end
   end
@@ -72,15 +74,15 @@ Substract the blind counts stored in `bg` from each of the spectra of `s`.
 """
 function rm_blindcounts!(s::SFSpectrum, bg::SFSpectrum)
     # Check if size is correct
-    spectrum_size = size(s.s, 1, 2)
-    bg_size = size(bg.s, 1, 2)
+    spectrum_size = (size(s, 1), size(s, 2))
+    bg_size = (size(bg, 1), size(bg, 2))
     spectrum_size == bg_size || error("Sizes of spectrum and background do not match. The spectrum is of size $spectrum_size whereas the background is of size $(bg_size).")
 
     # Mean counts of background
-    bg_counts = mean(bg.s, 3)
+    bg_counts = mean(bg, dims=3)
 
     # Subtract the background from each spectrum of s
-    for i = 1:size(s.s, 3)
+    for i = 1:size(s, 3)
         s.s[:,:,i] -= bg_counts
     end
     s
@@ -125,7 +127,6 @@ spectrum. If you want to select a specific calibration set the `date` keyword ar
 """
 function get_wavelength(s::SFSpectrum;
                         date = DateTime(get_attribute(s, "timestamp")))
-    const N_PIXEL = 512
 
     λ0 = get_attribute(s, "spectrometer_wavelength")
     x_binning = get_attribute(s, "x_binning")
@@ -176,7 +177,7 @@ Return the wavelength of the corresponding infrared light in nm.
 function get_ir_wavelength(s::SFSpectrum; vis=VIS_WAVELENGTH, date=DateTime(get_attribute(s, "timestamp")))
 
     function sf2ir(sf, vis)
-        1 ./ (1./sf - 1/vis)
+        1 ./ (1 ./ sf .- 1 ./ vis)
     end
 
     sf_wavelength = get_wavelength(s; date=date)
