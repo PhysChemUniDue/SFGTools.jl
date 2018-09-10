@@ -59,14 +59,10 @@ function average(s::SFSpectrum{T,N}) where {T,N}
   N == 3 || error("The number of dimensions of the spectrum has to be 3.")
   exptime = get_attribute(s, "ccd_exposure_time")::Float64
   if size(s, 2) == 1
-    n = SFSpectrum(s.id, Array{T,1}(size(s, 1)))
-    n.s = mean(s.s, 3)[:,1,1] / exptime
+    n = SFSpectrum(s.id, Array{T,1}(undef, size(s, 1)))
+    n.s = mean(s, dims=3)[:,1,1] / exptime
   else
-<<<<<<< HEAD
-    n = SFSpectrum(s.id, Array{T,2}(undef, size(s, 1), size(s, 2)))
-=======
     n = SFSpectrum(s.id, Array{T,2}(undef, (size(s, 1), size(s, 2)) ))
->>>>>>> 04141dad307028ee546c77aa890fcb41c2c3fde1
     n.s = mean(s, dims=3)[:,:,1] / exptime
   end
   n

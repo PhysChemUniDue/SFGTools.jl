@@ -252,17 +252,17 @@ function get_metadata(id::Int64)
 end
 
 
-function get_metadata(path::AbstractString)
+# function get_metadata(path::AbstractString)
   
-  path == "" && (return Dict())
+#   path == "" && (return Dict())
 
-  if splitext(path)[2] != ".txt"
-      mfile = searchdir(path, "data.txt")[1]
-      path = joinpath(path, mfile)
-  end
-  data = readdlm(path, '\t'; comments=false)
-  keys = data[:,1]
-  values = data[:,2]
+#   if splitext(path)[2] != ".txt"
+#       mfile = searchdir(path, "data.txt")[1]
+#       path = joinpath(path, mfile)
+#   end
+#   data = readdlm(path, '\t'; comments=false)
+#   keys = data[:,1]
+#   values = data[:,2]
 
 #   mdict = Dict{String, Any}()
 #   for (i, key) in enumerate(keys)
@@ -273,19 +273,11 @@ function get_metadata(path::AbstractString)
 # end
 
 function get_metadata(path::AbstractString)
-<<<<<<< HEAD
-    return nothing
-    path == "" && (return Dict())
-
-    mdict = Dict{String, Any}()
-    Array{String}[]
-=======
 
     path == "" && (return Dict())
   
     mdict = Dict{String, Any}()
     mfiles = Array{String}[]
->>>>>>> 04141dad307028ee546c77aa890fcb41c2c3fde1
   
     if splitext(path)[2] != ".txt"
         mfiles = searchdir(path, "data.txt")
@@ -295,11 +287,7 @@ function get_metadata(path::AbstractString)
         paths = [path]
         mfiles = [path]
     end
-<<<<<<< HEAD
-    
-=======
   
->>>>>>> 04141dad307028ee546c77aa890fcb41c2c3fde1
     values = Array{Any,2}
     data = readdlm(paths[1], '\t'; comments=false)
     keys = Array{String}
@@ -323,9 +311,6 @@ function get_metadata(path::AbstractString)
   
     return mdict
   end
-
-  return mdict
-end
 
 
 function searchdir(directory::AbstractString, key::AbstractString)
