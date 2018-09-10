@@ -62,8 +62,12 @@ function average(s::SFSpectrum{T,N}) where {T,N}
     n = SFSpectrum(s.id, Array{T,1}(size(s, 1)))
     n.s = mean(s.s, 3)[:,1,1] / exptime
   else
-    n = SFSpectrum(s.id, Array{T,2}(size(s, 1, 2)))
-    n.s = mean(s.s, 3)[:,:,1] / exptime
+<<<<<<< HEAD
+    n = SFSpectrum(s.id, Array{T,2}(undef, size(s, 1), size(s, 2)))
+=======
+    n = SFSpectrum(s.id, Array{T,2}(undef, (size(s, 1), size(s, 2)) ))
+>>>>>>> 04141dad307028ee546c77aa890fcb41c2c3fde1
+    n.s = mean(s, dims=3)[:,:,1] / exptime
   end
   n
 end
@@ -130,7 +134,7 @@ function get_wavelength(s::SFSpectrum;
 
     λ0 = get_attribute(s, "spectrometer_wavelength")
     x_binning = get_attribute(s, "x_binning")
-    num_points = N_PIXEL / x_binning
+    num_points = N_PIXEL ÷ x_binning
 
     if date < DateTime("2018-05-14")
         # Calibration Parameters were determined in 2017-12-13_SpectrometerCalibration.ipynb

@@ -264,9 +264,64 @@ function get_metadata(path::AbstractString)
   keys = data[:,1]
   values = data[:,2]
 
-  mdict = Dict{String, Any}()
-  for (i, key) in enumerate(keys)
-      mdict[key] = values[i]
+#   mdict = Dict{String, Any}()
+#   for (i, key) in enumerate(keys)
+#       mdict[key] = values[i]
+#   end
+
+#   return mdict
+# end
+
+function get_metadata(path::AbstractString)
+<<<<<<< HEAD
+    return nothing
+    path == "" && (return Dict())
+
+    mdict = Dict{String, Any}()
+    Array{String}[]
+=======
+
+    path == "" && (return Dict())
+  
+    mdict = Dict{String, Any}()
+    mfiles = Array{String}[]
+>>>>>>> 04141dad307028ee546c77aa890fcb41c2c3fde1
+  
+    if splitext(path)[2] != ".txt"
+        mfiles = searchdir(path, "data.txt")
+        paths = Array{String}(undef, size(mfiles, 1))
+        [paths[i] = joinpath(path, mfiles[i]) for i = 1:length(mfiles)]
+    else
+        paths = [path]
+        mfiles = [path]
+    end
+<<<<<<< HEAD
+    
+=======
+  
+>>>>>>> 04141dad307028ee546c77aa890fcb41c2c3fde1
+    values = Array{Any,2}
+    data = readdlm(paths[1], '\t'; comments=false)
+    keys = Array{String}
+    keys = data[:,1]
+    value = data[:,2]
+    if length(mfiles) == 1
+      for (i, key) in enumerate(keys)
+          mdict[key] = value[i]
+      end
+    elseif length(mfiles) > 1
+      valuemat = Array{Any,2}(undef, length(keys), length(mfiles))
+      valuemat[:,1] = data[:,2]
+      for i = 2:length(mfiles)
+          data = readdlm(paths[i], '\t'; comments=false)
+          valuemat[:,i] = data[:,2]
+      end
+      for (i, key) in enumerate(keys)
+          mdict[key] = valuemat[i,:]
+      end
+    end
+  
+    return mdict
   end
 
   return mdict
