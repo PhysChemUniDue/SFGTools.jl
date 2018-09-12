@@ -126,10 +126,10 @@ spectrum. If you want to select a specific calibration set the `date` keyword ar
 `date=DateTime("2011-11-11")` to select the calibration curve that was valid on that specific date.
 """
 function get_wavelength(s::SFSpectrum;
-                        date = DateTime(get_attribute(s, "timestamp")))
+                        date = DateTime(get_attribute(s, "timestamp")[1]))
 
-    λ0 = get_attribute(s, "spectrometer_wavelength")
-    x_binning = get_attribute(s, "x_binning")
+    λ0 = get_attribute(s, "spectrometer_wavelength")[1]
+    x_binning = get_attribute(s, "x_binning")[1]
     num_points = N_PIXEL ÷ x_binning
 
     if date < DateTime("2018-05-14")
@@ -167,15 +167,15 @@ spectrum. If you want to select a specific calibration set the `date` keyword ar
 
 You can change the default wavelength for the visible light by passing a value to the `vis` keyword argument.
 """
-function get_wavenumber(s::SFSpectrum; date=DateTime(get_attribute(s, "timestamp")))
+function get_wavenumber(s::SFSpectrum; date=DateTime(get_attribute(s, "timestamp")[1]))
     1 ./ get_wavelength(s; kwargs...) * 1e7
 end
 
 """
 Return the wavelength of the corresponding infrared light in nm.
 """
-function get_ir_wavelength(s::SFSpectrum; vis=VIS_WAVELENGTH, date=DateTime(get_attribute(s, "timestamp")))
-
+function get_ir_wavelength(s::SFSpectrum; vis=VIS_WAVELENGTH, date=DateTime(get_attribute(s, "timestamp")[1]))
+    
     function sf2ir(sf, vis)
         1 ./ (1 ./ sf .- 1 ./ vis)
     end
