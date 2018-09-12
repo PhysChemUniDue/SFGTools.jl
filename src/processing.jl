@@ -227,7 +227,7 @@ end
 Get the pump delay time in ps for a given SFSpectrum
 """
 function get_pump_delay(s::SFSpectrum)
-    p = get_attribute(s, "pump_dl_position")
+    p = get_attribute(s, "pump_dl_position")[1]
     dlpos2t(p)
 end
 
