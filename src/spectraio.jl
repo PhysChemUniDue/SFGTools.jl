@@ -6,9 +6,10 @@ using DelimitedFiles
 """
     list_spectra(; exact="", inexact="", date::Tuple{Int64,Int64,Int64}, group=false)
 
-List available spectra.
-First `grab(datafolder)` the spectra to genereate a `.spectralist` file. You can
-optionally pass the path to the `.spectralist` file in the arguments.
+Return a `DataFrame` with matching spectra.
+First `grab(datafolder)` the spectra to genereate a `.spectralist` file inside your current working
+directory. Note that you have to have the `.spectralist` file in your current working directory
+for `list_spectra` to work.
 
 Filter the dataframe:
 * `exact="name"`: Match the exact name of the spectrum

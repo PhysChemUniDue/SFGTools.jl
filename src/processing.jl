@@ -52,8 +52,39 @@ end
 
 
 """
-Combine all single spectra to a single one. Returns the mean counts
-per second.
+    average(s)
+
+Combine all spectra of a series in `s` to a single one. Returns the mean counts
+per second. In more detail we take the mean of the third dimension and
+divide that by the exposure time. 
+
+Note that there is also a bias of around
+710 count for each readout that has to be subtracted first to get the true
+mean counts per second.
+
+# Example
+```julia-repl
+julia> s
+3×2×2 SFSpectrum{Float64,3}:
+[:, :, 1] =
+ 0.6  1.0
+ 0.2  0.2
+ 0.2  0.2
+
+[:, :, 2] =
+ 0.6  0.6
+ 1.0  0.8
+ 0.2  0.4
+
+julia> average(s)
+3×2 SFSpectrum{Float64,2}:
+ 0.6  0.8
+ 0.6  0.5
+ 0.2  0.3
+
+julia> get_attribute(s, "ccd_exposure_time")[1]
+1.0
+```
 """
 function average(s::SFSpectrum{T,N}) where {T,N}
   N == 3 || error("The number of dimensions of the spectrum has to be 3.")
@@ -199,7 +230,7 @@ end
 
 
 """
-Get the parameter that changes during the measurement as a string
+Get the parameters where there is change during the measurement as a dict
 """
 function get_variables(d::Array{SFSpectrum})
 
