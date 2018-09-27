@@ -199,7 +199,7 @@ spectrum. If you want to select a specific calibration set the `date` keyword ar
 You can change the default wavelength for the visible light by passing a value to the `vis` keyword argument.
 """
 function get_wavenumber(s::SFSpectrum; date=DateTime(get_attribute(s, "timestamp")[1]))
-    1 ./ get_wavelength(s; kwargs...) * 1e7
+    1 ./ get_wavelength(s; date=date) * 1e7
 end
 
 """
