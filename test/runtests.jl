@@ -34,14 +34,39 @@ function attribute_test(spectrum)
     meta = get_metadata(spectrum)
     @test typeof(meta) == Dict{String,Any}
     attr = get_attribute(spectrum, "ccd_exposure_time")
-    @test attr == 0.5
+    @test attr == Any[0.5, 0.5, 0.5, 0.5, 0.5]
 end
 
-function blindcounts_test()
-    blind_spectrum = SFSpectrum(123, rand(512,1,1000) .+ 700.0)
-    spectrum = SFSpectrum(456, rand(512,1,5) .+ 710.0)
-    rm_blindcounts!(spectrum, blind_spectrum)
-    @test 9.0 < mean(spectrum.s) < 11.0
+function fieldcorrection_test()
+    a = Array{Float64,3}(undef, (4, 1, 2))
+    a[:,1,1] = [6, 7, 8, 9]
+    a[:,1,2] = [6, 8, 9, 7]
+    spectrum = SFSpectrum(0, a)
+
+    b = Array{Float64,3}(undef, (4, 1, 2))
+    b[:,1,1] = [0, 1, 3, 0]
+    b[:,1,2] = [2, 1, 1, 0]
+    bias = SFSpectrum(0, b)
+
+    d = Array{Float64,3}(undef, (4, 1, 2))
+    d[:,1,1] = [3, 4, 3, 5]
+    d[:,1,2] = [4, 2, 1, 5]
+    dark = SFSpectrum(0, d)
+
+    f = Array{Float64,3}(undef, (4, 1, 2))
+    f[:,1,1] = [2, 3, 4, 3]
+    f[:,1,2] = [4, 3, 6, 1]
+    flat = SFSpectrum(0, f)
+
+    l = Array{Float64,3}(undef, (4, 1, 2))
+    l[:,1,1] = [1, 2, 3, 0]
+    l[:,1,2] = [3, 2, 3, 2]
+    darkflat = SFSpectrum(0, l)
+
+    fieldcorrection!(spectrum, bias=bias, dark=dark, flat=flat, darkflat=darkflat)
+
+    @test spectrum[:,1,1] == [5.0, 8.0,  6.0, 8.0]
+    @test spectrum[:,1,2] == [5.0, 10.0, 7.0, 4.0]
 end
 
 # function save_mat_test(spectra)
@@ -66,8 +91,6 @@ end
 @testset "list_spectra Tests" begin listtest() end
 @testset "load_spectra Tests" begin global spectrum = loadtest()[1] end
 @testset "Attribute Tests" begin attribute_test(spectrum) end
-@testset "Blindcounts Removal" begin blindcounts_test() end
-spectra = makespectraarray(spectrum)
+@testset "Fieldcorrection Tests" begin fieldcorrection_test() end
+# spectra = makespectraarray(spectrum)
 # @testset "MAT Saving" begin save_mat_test(spectra) end
-
-

@@ -1,6 +1,5 @@
 import Statistics: mean, std
 
-const VIS_WAVELENGTH = 512.4  # According to service protocol of May 2018
 
 
 """
@@ -49,6 +48,64 @@ function rm_events!(s::Array{Float64}, width=3; printinfo=true, minstd=5)
   return s
 end
 
+
+"""
+`fieldcorrection!(spectrum::SFSpectrum{T,3}, width=2)`
+Remove bias and dark counts from spectrum and normalize it.
+Takes a single spectrum or an array of spectra. `width` should be equal to the
+width of the expected spikes (i.e. if a single spike takes up 4 pixels `width`
+should be 4)
+
+The function prints information about removed events by default. Turn off this behaviour by
+setting the keyword argument `printinfo` to `false`.
+"""
+function fieldcorrection!(spectrum::AbstractArray{T,3};
+                          bias=[]::AbstractArray{T,3},
+                          dark=[]::AbstractArray{T,3},
+                          flat=[]::AbstractArray{T,3},
+                          darkflat=[]::AbstractArray{T,3}) where T
+
+    function rm_offset!(s, offset)
+        offset_m = mean(offset, dims=3)
+        for i = 1:size(s, 3)
+            s[:,:,i] .-= offset_m[:,:,1]
+        end
+        s
+    end
+
+    function rm_offset(s, offset)
+        offset_m = mean(offset, dims=3)
+        n = deepcopy(s)
+        for i = 1:size(s, 3)
+            n[:,:,i] .-= offset_m[:,:,1]
+        end
+        n
+    end
+
+    function flatcorrection!(s, flat)
+        flatmean = mean(flat, dims=3)
+        flatmean ./= maximum(flatmean)
+        for i = 1:size(s, 3)
+            s[:,:,i] ./= flatmean[:,:,1]
+        end
+        s
+    end
+
+    # For readability make same length as all
+    dafl = darkflat
+    spec = spectrum
+
+    !isempty(bias) &&            rm_offset!(spec, bias)
+    !isempty(dark) && (dark_ub = rm_offset( dark, bias))
+    !isempty(flat) && (flat_ub = rm_offset( flat, bias))
+    !isempty(dafl) && (dafl_ub = rm_offset( dafl, bias))
+    !isempty(dark) && rm_offset!(spec,    dark_ub)
+    !isempty(dafl) && rm_offset!(flat_ub, dafl_ub)
+
+    !isempty(flat) && flatcorrection!(spec, flat_ub)
+
+    return spec
+end
 
 
 """
