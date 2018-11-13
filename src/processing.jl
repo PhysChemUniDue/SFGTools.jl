@@ -1,32 +1,23 @@
 import Statistics: mean, std
 
 
-
 """
-`rm_events!(s::SFSpectrum, width=2)`
-Remove spikes from a spectrum.
+`rm_events!(s::SFSpectrum; width=2, minstd=5)`
+Remove spikes from a spectrum and return the number of events removed.
+
 Takes a single spectrum or an array of spectra. `width` should be equal to the
 width of the expected spikes (i.e. if a single spike takes up 4 pixels `width`
-should be 4)
-
-The function prints information about removed events by default. Turn off this behaviour by
-setting the keyword argument `printinfo` to `false`.
+should be 4). `minstd` denotes the factor of which the peak has to be above
+the standard deviation of the spectrum counts to be recognized as an event.
 """
-function rm_events!(s::SFSpectrum, width=2; kwargs...)
-  s.s = rm_events!(s.s, width; kwargs...)
+function rm_events!(s::SFSpectrum; width=3, minstd=5)
+  num_removed_events = rm_events!(s.s; kwargs...)
 end
 
-function rm_events!(s::Array{SFSpectrum}, width=2; kwargs...)
-  for r in s
-    r.s = rm_events!(r.s, width; kwargs...)
-  end
-  return s
-end
-
-function rm_events!(s::Array{Float64}, width=3; printinfo=true, minstd=5)
+function rm_events!(s::Array{Float64}; width=3, minstd=5)
   r = reshape(s, (:, 1))
   dr = diff(r, dims=1)
-  printinfo && (eventcounter = 0)
+  num_removed_events = 0
 
   threshold = minstd * std(dr)
   startidx = width + 1
@@ -39,13 +30,13 @@ function rm_events!(s::Array{Float64}, width=3; printinfo=true, minstd=5)
       tmp = dr[lowidx:i]
       width_real = width - argmax(tmp) + 1
       r[i-width_real+1:i] .= (r[i-width_real] + r[i+1])/2
-      printinfo && (eventcounter += 1)
+      num_removed_events += 1
     end
   end
 
   s = reshape(r, size(s))
-  printinfo && println("Removed $eventcounter events.")
-  return s
+
+  num_removed_events
 end
 
 

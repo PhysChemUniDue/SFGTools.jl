@@ -1,6 +1,7 @@
 using Test
 using DataFrames
 using SFGTools
+using Random
 import Statistics: mean
 
 const SAMPLE_DATA_DIR = joinpath(@__DIR__, "sampledata/")
@@ -69,6 +70,14 @@ function fieldcorrection_test()
     @test spectrum[:,1,2] == [5.0, 10.0, 7.0, 4.0]
 end
 
+function rm_events_test()
+    a = rand(MersenneTwister(0), 50)
+    a[19:20] .*= 5
+    a[22] *= 40
+    num_removed_events = rm_events!(a, minstd=2)
+    @test num_removed_events == 2
+end
+
 # function save_mat_test(spectra)
 #     success = false
 #     try
@@ -92,5 +101,6 @@ end
 @testset "load_spectra Tests" begin global spectrum = loadtest()[1] end
 @testset "Attribute Tests" begin attribute_test(spectrum) end
 @testset "Fieldcorrection Tests" begin fieldcorrection_test() end
+@testset "Event Removal Tests" begin rm_events_test() end
 # spectra = makespectraarray(spectrum)
 # @testset "MAT Saving" begin save_mat_test(spectra) end
