@@ -27,7 +27,7 @@ function list_spectra(; exact=""::AbstractString,
                         group=false)
 
   dir = "./"
-  
+
   spectrafile = joinpath(dir, ".spectralist")
   if isfile(spectrafile)
     dat = readdlm(spectrafile; comments=false)
@@ -254,7 +254,7 @@ end
 
 
 # function get_metadata(path::AbstractString)
-  
+
 #   path == "" && (return Dict())
 
 #   if splitext(path)[2] != ".txt"
@@ -276,10 +276,10 @@ end
 function get_metadata(path::AbstractString)
 
     path == "" && (return Dict())
-  
+
     mdict = Dict{String, Any}()
     mfiles = Array{String}[]
-  
+
     if splitext(path)[2] != ".txt"
         mfiles = searchdir(path, "data.txt")
         paths = Array{String}(undef, size(mfiles, 1))
@@ -288,7 +288,7 @@ function get_metadata(path::AbstractString)
         paths = [path]
         mfiles = [path]
     end
-  
+
     values = Array{Any,2}
     data = readdlm(paths[1], '\t'; comments=false)
     keys = Array{String}
@@ -309,7 +309,7 @@ function get_metadata(path::AbstractString)
           mdict[key] = valuemat[i,:]
       end
     end
-  
+
     return mdict
   end
 
@@ -322,48 +322,48 @@ end
 """
 Save Spectra in a Matlab file.
 """
-function save_mat(filename::AbstractString, s::SFSpectrum)
-    save_mat(filename, SFSpectrum[s])
-end
-
-function save_mat(filename::AbstractString, s::Array{SFSpectrum})
-    # Check if filename has a proper extension
-    if splitext(filename)[end] != ".mat"
-        filename *= ".mat"
-    end
-
-    f = matopen(filename, "w")
-
-    length(s)
-    
-    for i = 1:length(s)
-
-        # Put Stuff in dict
-        name = ""
-        try
-            name = get_attribute(s[i], "name")
-        catch
-            name = string(s[i].id)
-        end
-
-        data = Dict()
-        try 
-            data = Dict(
-                "name" => get_attribute(s[i], "name"),
-                "signal" => s[i].s,
-                "wavelength" => get_ir_wavelength(s[i]),
-                "wavenumber" => get_ir_wavenumber(s[i]),
-            )
-        catch
-            data = Dict(
-                "name" => name,
-                "signal" => s[i].s
-            )
-        end
-        data
-
-        # Write to file
-        write(f, "data$i", data)
-    end
-    close(f)
-end
+# function save_mat(filename::AbstractString, s::SFSpectrum)
+#     save_mat(filename, SFSpectrum[s])
+# end
+#
+# function save_mat(filename::AbstractString, s::Array{SFSpectrum})
+#     # Check if filename has a proper extension
+#     if splitext(filename)[end] != ".mat"
+#         filename *= ".mat"
+#     end
+#
+#     f = matopen(filename, "w")
+#
+#     length(s)
+#
+#     for i = 1:length(s)
+#
+#         # Put Stuff in dict
+#         name = ""
+#         try
+#             name = get_attribute(s[i], "name")
+#         catch
+#             name = string(s[i].id)
+#         end
+#
+#         data = Dict()
+#         try
+#             data = Dict(
+#                 "name" => get_attribute(s[i], "name"),
+#                 "signal" => s[i].s,
+#                 "wavelength" => get_ir_wavelength(s[i]),
+#                 "wavenumber" => get_ir_wavenumber(s[i]),
+#             )
+#         catch
+#             data = Dict(
+#                 "name" => name,
+#                 "signal" => s[i].s
+#             )
+#         end
+#         data
+#
+#         # Write to file
+#         write(f, "data$i", data)
+#     end
+#     close(f)
+# end
