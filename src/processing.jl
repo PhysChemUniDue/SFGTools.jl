@@ -56,7 +56,7 @@ end
 
 Combine all spectra of a series in `s` to a single one. Returns the mean counts
 per second. In more detail we take the mean of the third dimension and
-divide that by the exposure time. 
+divide that by the exposure time.
 
 Note that there is also a bias of around
 710 count for each readout that has to be subtracted first to get the true
@@ -206,7 +206,7 @@ end
 Return the wavelength of the corresponding infrared light in nm.
 """
 function get_ir_wavelength(s::SFSpectrum; vis=VIS_WAVELENGTH, date=DateTime(get_attribute(s, "timestamp")[1]))
-    
+
     function sf2ir(sf, vis)
         1 ./ (1 ./ sf .- 1 ./ vis)
     end
@@ -270,25 +270,4 @@ function dlpos2t(p)
     l = 0.61
     n = 125000.0
     p * l / (n * c) * 1e12
-end
-
-"""
-Automated Processing.
-"""
-function quick_process(d::Array{SFSpectrum}; width=5)
-    # 1. Get the variable of the Dataset
-    vars = get_variables(d)
-
-    # 2. Processing
-    rm_events!.(d, width)
-    mean!.(d)
-
-    λ = get_ir_wavelength(d[1])
-
-    z = zeros(size(d[1].s, 1), length(d), size(d[1].s, 2))
-    for i = 1:length(d)
-        z[:,i,:] = d[i].s
-    end
-
-    return λ, vars, z
 end
