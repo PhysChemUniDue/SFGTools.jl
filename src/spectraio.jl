@@ -252,27 +252,6 @@ function get_metadata(id::Int64)
     mdict = get_metadata(dir)
 end
 
-
-# function get_metadata(path::AbstractString)
-
-#   path == "" && (return Dict())
-
-#   if splitext(path)[2] != ".txt"
-#       mfile = searchdir(path, "data.txt")[1]
-#       path = joinpath(path, mfile)
-#   end
-#   data = readdlm(path, '\t'; comments=false)
-#   keys = data[:,1]
-#   values = data[:,2]
-
-#   mdict = Dict{String, Any}()
-#   for (i, key) in enumerate(keys)
-#       mdict[key] = values[i]
-#   end
-
-#   return mdict
-# end
-
 function get_metadata(path::AbstractString)
 
     path == "" && (return Dict())
