@@ -101,26 +101,6 @@ end
 
 
 """
-Substract the blind counts stored in `bg` from each of the spectra of `s`.
-"""
-function rm_blindcounts!(s::SFSpectrum, bg::SFSpectrum)
-    # Check if size is correct
-    spectrum_size = (size(s, 1), size(s, 2))
-    bg_size = (size(bg, 1), size(bg, 2))
-    spectrum_size == bg_size || error("Sizes of spectrum and background do not match. The spectrum is of size $spectrum_size whereas the background is of size $(bg_size).")
-
-    # Mean counts of background
-    bg_counts = mean(bg, dims=3)
-
-    # Subtract the background from each spectrum of s
-    for i = 1:size(s, 3)
-        s.s[:,:,i] -= bg_counts
-    end
-    s
-end
-
-
-"""
 Remove Background from the first spectrum passed to the function. →SFSpectrum
 Takes a spectrum or an array of spectra `s` and a background spectrum `bg`.
 """
