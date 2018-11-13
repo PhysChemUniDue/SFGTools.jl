@@ -63,7 +63,7 @@ function fieldcorrection_test()
     l[:,1,2] = [3, 2, 3, 2]
     darkflat = SFSpectrum(0, l)
 
-    fieldcorrection!(spectrum, bias=bias, dark=dark, flat=flat, darkflat=darkflat)
+    fieldcorrection!(spectrum, bias, dark=dark, flat=flat, darkflat=darkflat)
 
     @test spectrum[:,1,1] == [5.0, 8.0,  6.0, 8.0]
     @test spectrum[:,1,2] == [5.0, 10.0, 7.0, 4.0]
