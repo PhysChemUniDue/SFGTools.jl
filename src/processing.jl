@@ -101,35 +101,6 @@ end
 
 
 """
-Remove Background from the first spectrum passed to the function. →SFSpectrum
-Takes a spectrum or an array of spectra `s` and a background spectrum `bg`.
-"""
-function rm_background!(s::SFSpectrum, bg::SFSpectrum)
-    # Make a copy of the background spectrum because we don't want to
-    # change it inside this function.
-    bgc = copy(bg)
-    a = [s, bgc]
-    for i = 1:2
-        if ndims(a[i]) > 3
-            @show size(a[i])
-            println("Expected ndims(s) and ndims(bg) to be 1, 2 or 3.")
-            return
-        elseif ndims(a[i]) == 3
-            mean!(a[i])
-        end
-    end
-    s.s -= bgc.s
-end
-
-function rm_background!(a::Array{SFSpectrum}, bg::SFSpectrum)
-    for i = 1:length(a)
-        a[i].s = rm_background!(a[i], bg)
-    end
-    return a
-end
-
-
-"""
 Return the wavelength of the detected light in nm.
 
 The appropriate calibration curve of the spectrometer is automatically selected via the timestamp of the
