@@ -50,6 +50,8 @@ function list_spectra(; exact=""::AbstractString,
       df = df[Dates.yearmonthday.(df[:date]) .== [date], :]
   end
 
+  sort!(df)
+
   if group
       df = by(df, :name, df -> DataFrame(
         N = length(df[:id]),
@@ -58,16 +60,10 @@ function list_spectra(; exact=""::AbstractString,
         id = [df[:id]]))
   end
 
-  sort!(df)
-
   return df
 
 end
 
-# For compatibility with older versions
-function list_spectra(str::String)
-    list_spectra()
-end
 
 """
     grab(dir="./"; getall=false)
