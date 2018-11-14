@@ -105,12 +105,10 @@ end
 
 
 """
-`fieldcorrection!(spectrum::AbstractArray{T,3}, bias::AbstractArray{T,3}; dark=[]::AbstractArray{T,3}, flat=[]::AbstractArray{T,3}, darkflat=[]::AbstractArray{T,3})`
+`fieldcorrection!(spectrum::AbstractArray{T,3}; bias=[]::AbstractArray{T,3}, dark=[]::AbstractArray{T,3}, flat=[]::AbstractArray{T,3}, darkflat=[]::AbstractArray{T,3})`
 Remove bias and dark counts from spectrum and normalize it with a flat spectrum.
 
 All spectra provided have to be 3D (including bias etc.).
-Provide at least a bias spectrum. The others are optional. A dark spectrum is
-recommended.
 
 The algorithm works as follows where ``s`` is the spectrum ``b`` the bias,
 ``d`` the dark spectrum, ``f`` the flat spectrum and ``l`` the dark flat
@@ -134,8 +132,8 @@ of the spectra.
 ``s_{b,d,f} = s_{b,d} / f_{b,d,norm}``
 
 """
-function fieldcorrection!(spectrum::AbstractArray{T,3},
-                          bias::AbstractArray{T,3};
+function fieldcorrection!(spectrum::AbstractArray{T,3};
+                          bias=[]::AbstractArray{T,3},
                           dark=[]::AbstractArray{T,3},
                           flat=[]::AbstractArray{T,3},
                           darkflat=[]::AbstractArray{T,3}) where T
