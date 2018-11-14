@@ -133,10 +133,10 @@ of the spectra.
 
 """
 function fieldcorrection!(spectrum::AbstractArray{T,3};
-                          bias=[]::AbstractArray{T,3},
-                          dark=[]::AbstractArray{T,3},
-                          flat=[]::AbstractArray{T,3},
-                          darkflat=[]::AbstractArray{T,3}) where T
+                          bias=AbstractArray{Float64,3}[]::AbstractArray{T,3},
+                          dark=AbstractArray{Float64,3}[]::AbstractArray{T,3},
+                          flat=AbstractArray{Float64,3}[]::AbstractArray{T,3},
+                          darkflat=AbstractArray{Float64,3}[]::AbstractArray{T,3}) where T
 
     function rm_offset!(s, offset)
         offset_m = mean(offset, dims=3)
