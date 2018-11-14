@@ -295,6 +295,53 @@ end
 
 
 """
+`savejson(path::String, spectra::Array{SFSpectrum{T,1},1})`
+Saves the array `spectra` to `path` in JSON format.
+
+This is primarily to read the data set by the Matlab fit program.
+"""
+function savejson(path::String, spectra::Array{SFSpectrum{T,1},1}) where T
+    splitext(path)[end] != ".json" && (path = path * ".json")
+
+    for i = 1:length(spectra)
+        length(size(spectra[i])) > 1 && error("Please make the Spectra 1D")
+    end
+
+    ids = Int64[]
+    wavelengths = Array{Float64}[]
+    wavenumbers = Array{Float64}[]
+    signals = Array{Float64}[]
+    names = String[]
+
+    for i = 1:length(spectra)
+        λ = get_ir_wavelength(spectra[i])
+        ν = get_ir_wavenumber(spectra[i])
+
+        push!(ids, spectra[i].id)
+        push!(wavelengths, λ)
+        push!(wavenumbers, ν)
+        push!(signals, spectra[i].s)
+        push!(names, get_attribute(spectra[i], "name"))
+    end
+
+    dict = Dict(
+        "ids"         => ids,
+        "wavelengths" => wavelengths,
+        "wavenumbers" => wavenumbers,
+        "signals"     => signals,
+        "names"       => names
+    )
+
+    jsonstring = json(dict)
+
+    open(path, "w+") do io
+        write(io, jsonstring)
+    end
+
+end
+
+
+"""
 Save Spectra in a Matlab file.
 """
 # function save_mat(filename::AbstractString, s::SFSpectrum)
