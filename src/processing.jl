@@ -1,4 +1,6 @@
 import Statistics: mean, std
+import Dierckx: Spline1D, evaluate
+import Optim: BFGS, optimize
 
 
 """
@@ -37,6 +39,68 @@ function rm_events!(s::Array{Float64}; width=3, minstd=5)
   s = reshape(r, size(s))
 
   num_removed_events
+end
+
+
+"""
+`pixelshift!(a::AbstractArray{T,N}, dim::Int, shift::Real, amplification::Real=1.0)`
+Shift the array a the number of pixels `shift` alongside dimension `dim` and
+amplify the values by `amplification`.
+
+Example:
+```
+julia> a = [2.0, 4.0, 6.0, 2.0];
+julia> pixelshift!(a, 1, 0.5, 1.0)
+4-element Array{Float64,1}:
+ 3.0
+ 5.0
+ 4.0
+ 2.0
+```
+"""
+function pixelshift!(a::AbstractArray{T,N}, dim::Int, shift::Real, amplification::Real=1.0) where {T <: Real, N}
+
+    N > 2 && error("pixelshift not defined for the case of $N dimensions")
+
+    pixels = 1:size(a, dim)
+    pixels_shifted = pixels .+ shift
+
+    if N == 1
+        spl = Spline1D(pixels, a, k=1)
+        a .= evaluate(spl, pixels_shifted) .* amplification
+    elseif N >= 2
+        for i = 1:size(a', dim)
+            dim == 1 && (spl = Spline1D(pixels, a[:,i], k=1))
+            dim == 1 && (a[:,i] .= evaluate(spl, pixels_shifted) .* amplification)
+            dim == 2 && (spl = Spline1D(pixels, a[i,:], k=1))
+            dim == 2 && (a[i,:] .= evaluate(spl, pixels_shifted) .* amplification)
+        end
+    end
+
+    a
+
+end
+
+function pixelshift(a::AbstractArray{T,N}, dim::Int, shift::Real, amplification::Real=1.0) where {T <: Real, N}
+
+    b = deepcopy(a)
+    pixelshift!(b, dim, shift, amplification)
+
+end
+
+
+"""
+`findpixelshift(a::AbstractArray{T}, b::AbstractArray{T}, dim::Int)`
+Find the optimal `shift` and `amplification` values for the `pixelshift`
+function.
+
+Array `b` is shifted alongside `a` in dimension `dim` to find the optimal
+shift parameters. The result is on `Optim.jl` result. The shift can be accessed
+by `result.minimizer[1]` and the amplitude by `result.minimizer[2]`.
+"""
+function findpixelshift(a::AbstractArray{T}, b::AbstractArray{T}, dim::Int) where T <: Number
+    minfun(x) = mean((a .- pixelshift(b, dim, x[1], x[2])).^2)
+    result = optimize(minfun, [0.0, 1.0], BFGS())
 end
 
 

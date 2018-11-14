@@ -27,7 +27,10 @@ export  SFSpectrum,
         get_ir_wavenumber,
         get_pump_delay,
         dlpos2t,
-        get_variables
+        get_variables,
+        pixelshift,
+        pixelshift!,
+        findpixelshift
         # save_mat
 
 end
