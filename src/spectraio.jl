@@ -2,6 +2,7 @@ import FileIO.load
 using CSV
 using Dates
 using DelimitedFiles
+using JSON: json
 
 """
     list_spectra(; exact="", inexact="", date::Tuple{Int64,Int64,Int64}, group=false)
