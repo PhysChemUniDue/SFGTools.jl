@@ -13,7 +13,7 @@ should be 4). `minstd` denotes the factor of which the peak has to be above
 the standard deviation of the spectrum counts to be recognized as an event.
 """
 function rm_events!(s::SFSpectrum; width=3, minstd=5)
-  num_removed_events = rm_events!(s.s; kwargs...)
+  num_removed_events = rm_events!(s.s; width=width, minstd=minstd)
 end
 
 function rm_events!(s::Array{Float64}; width=3, minstd=5)
