@@ -117,11 +117,11 @@ of the spectra.
 
 ``s_b = s - <b>``
 
-``d_b = s - <b>``
+``d_b = d - <b>``
 
-``f_b = s - <b>``
+``f_b = f - <b>``
 
-``l_b = s - <b>``
+``l_b = l - <b>``
 
 ``s_{b,d} = s_b - <d_b>``
 
@@ -131,6 +131,7 @@ of the spectra.
 
 ``s_{b,d,f} = s_{b,d} / f_{b,d,norm}``
 
+If no bias is provided <b> equals zero. 
 """
 function fieldcorrection!(spectrum::AbstractArray{T,3};
                           bias=Array{Float64}(undef,0,0,0)::AbstractArray{T,3},
@@ -169,9 +170,17 @@ function fieldcorrection!(spectrum::AbstractArray{T,3};
     spec = spectrum
 
     !isempty(bias) &&            rm_offset!(spec, bias)
-    !isempty(dark) && (dark_ub = rm_offset( dark, bias))
-    !isempty(flat) && (flat_ub = rm_offset( flat, bias))
-    !isempty(dafl) && (dafl_ub = rm_offset( dafl, bias))
+
+    if !isempty(bias)
+        !isempty(dark) && (dark_ub = rm_offset( dark, bias))
+        !isempty(flat) && (flat_ub = rm_offset( flat, bias))
+        !isempty(dafl) && (dafl_ub = rm_offset( dafl, bias))
+    elseif isempty(bias) && !isempty(dark)
+        !isempty(dark) && (dark_ub = dark)
+        !isempty(flat) && (flat_ub = flat)
+        !isempty(dafl) && (dafl_ub = dafl)
+    end
+
     !isempty(dark) && rm_offset!(spec,    dark_ub)
     !isempty(dafl) && rm_offset!(flat_ub, dafl_ub)
 
