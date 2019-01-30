@@ -131,7 +131,7 @@ of the spectra.
 
 ``s_{b,d,f} = s_{b,d} / f_{b,d,norm}``
 
-If no bias is provided <b> equals zero. 
+If no bias is provided <b> equals zero.
 """
 function fieldcorrection!(spectrum::AbstractArray{T,3};
                           bias=Array{Float64}(undef,0,0,0)::AbstractArray{T,3},
@@ -225,15 +225,25 @@ julia> get_attribute(s, "ccd_exposure_time")[1]
 1.0
 ```
 """
-function average(s::SFSpectrum{T,N}) where {T,N}
+function average(s::SFSpectrum{T,N}; combine = true) where {T,N}
   N == 3 || error("The number of dimensions of the spectrum has to be 3.")
   exptime = get_attribute(s, "ccd_exposure_time")[1]
   if size(s, 2) == 1
-    n = SFSpectrum(s.id, Array{T,1}(undef, size(s, 1)))
-    n.s = mean(s, dims=3)[:,1,1] / exptime
+      if combine == true
+          n = SFSpectrum(s.id, Array{T,1}(undef, size(s, 1)))
+          n.s = mean(s, dims=3)[:,1,1] / exptime
+      else
+          n = SFSpectrum(s.id, s.s)
+          n.s = s.s ./ exptime
+      end
   else
-    n = SFSpectrum(s.id, Array{T,2}(undef, (size(s, 1), size(s, 2)) ))
-    n.s = mean(s, dims=3)[:,:,1] / exptime
+      if combine == true
+          n = SFSpectrum(s.id, Array{T,2}(undef, (size(s, 1), size(s, 2)) ))
+          n.s = mean(s, dims=3)[:,:,1] / exptime
+      else
+          n = SFSpectrum(s.id, s.s)
+          n.s = s.s ./ exptime
+      end
   end
   n
 end

@@ -83,6 +83,37 @@ function rm_events_test()
     @test num_removed_events == 2
 end
 
+function average_test()
+    a = Array{Float64,3}(undef, (4, 1, 2))
+    a[:,1,1] = [6, 7, 8, 9]
+    a[:,1,2] = [6, 8, 9, 7]
+    spectrum1 = SFSpectrum(63654399800782, a)
+
+    b = Array{Float64,3}(undef, (4, 1, 3))
+    b[:,1,1] = [0, 1, 3, 0]
+    b[:,1,2] = [2, 1, 1, 0]
+    b[:,1,3] = [4, 1, 2, 0]
+    spectrum2 = SFSpectrum(63654399800782, b)
+
+
+    spectrum = average(spectrum1)
+    @test spectrum[:,1,1] == [6.0, 7.5,  8.5, 8.0]
+
+    spectrum = average(spectrum1, combine = false)
+    @test spectrum[:,1,1] == [6, 7, 8, 9]
+    @test spectrum[:,1,2] == [6, 8, 9, 7]
+
+    spectrum = average(spectrum2)
+    @test spectrum[:,1,1] == [2.0, 1.0, 2.0, 0]
+
+    spectrum = average(spectrum2, combine = false)
+    @test spectrum[:,1,1] == [0, 1, 3, 0]
+    @test spectrum[:,1,2] == [2, 1, 1, 0]
+    @test spectrum[:,1,3] == [4, 1, 2, 0]
+end
+
+
+
 # function save_mat_test(spectra)
 #     success = false
 #     try
@@ -107,5 +138,6 @@ end
 @testset "Attribute Tests" begin attribute_test(spectrum) end
 @testset "Fieldcorrection Tests" begin fieldcorrection_test() end
 @testset "Event Removal Tests" begin rm_events_test() end
+@testset "average Test" begin average_test() end
 # spectra = makespectraarray(spectrum)
 # @testset "MAT Saving" begin save_mat_test(spectra) end
