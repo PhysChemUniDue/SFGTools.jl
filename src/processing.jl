@@ -17,18 +17,29 @@ function rm_events!(s::SFSpectrum; width=3, minstd=5)
 end
 
 function rm_events!(s::Array{Float64}; width=3, minstd=5)
-  r = reshape(s, (:, 1))
-  dr = diff(r, dims=1)
+
+# Behaves like `diff` but is twice as fast
+function mydiff(a)
+    b = typeof(a)(undef, length(a)-1)
+        for i = 1:length(a)-1
+           b[i] = a[i+1] - a[i]
+        end
+    b
+end
+
+  r = reshape(s, :)
+  dr = mydiff(r)
   num_removed_events = 0
 
   threshold = minstd * std(dr)
   startidx = width + 1
   endidx = length(dr)
+  lowidx = 0
 
   for i = startidx:endidx
     lowidx = i - width
 
-    if any(x -> x > threshold, dr[lowidx:i]) && any(x -> x < -threshold, dr[i])
+    if any(dr[j] > threshold for j in lowidx:i) && dr[i] < -threshold
       tmp = dr[lowidx:i]
       width_real = width - argmax(tmp) + 1
       r[i-width_real+1:i] .= (r[i-width_real] + r[i+1])/2
