@@ -1,3 +1,4 @@
+using SFGTools
 using Test
 using DataFrames
 using SFGTools
@@ -10,7 +11,7 @@ function listtest()
     grab(SAMPLE_DATA_DIR; getall=true)
     grab(SAMPLE_DATA_DIR)
     df = list_spectra()
-    @test size(df,1) == 118
+    @test size(df,1) == 123
     df = list_spectra(date=(2018,2,15))
     @test size(df,1) == 118
     df = list_spectra(inexact="HDT")
@@ -18,16 +19,15 @@ function listtest()
     df = list_spectra(exact="HDT_180109A_EksplaScan_FR")
     @test size(df,1) == 25
     df = list_spectra(group=true)
-    @test size(df,1) == 7
+    @test size(df,1) == 12
 end
 
 function loadtest()
-    spectrum_integer = load_spectra(63654390286607, UInt16)
-    @test spectrum_integer[1][1] == 0x02be
-    @test typeof(spectrum_integer) == Array{SFGTools.SFSpectrum,1}
     spectrum = load_spectra(63654390286607)
     @test typeof(spectrum) == Array{SFGTools.SFSpectrum,1}
     @test spectrum[1][1] == 702.0
+    @test load_spectra(63685681406436, format=:tiff) ==
+          load_spectra(63685681406436, format=:sif)
     spectrum
 end
 
@@ -64,7 +64,7 @@ function fieldcorrection_test()
     l[:,1,2] = [3, 2, 3, 2]
     darkflat = SFSpectrum(0, l)
 
-    fieldcorrection!(spectrum, bias, dark=dark, flat=flat, darkflat=darkflat)
+    fieldcorrection!(spectrum, bias=bias, dark=dark, flat=flat, darkflat=darkflat)
 
     @test spectrum[:,1,1] == [5.0, 8.0,  6.0, 8.0]
     @test spectrum[:,1,2] == [5.0, 10.0, 7.0, 4.0]
@@ -96,6 +96,7 @@ function makespectraarray(spectrum::SFSpectrum)
     end
     spectra
 end
+
 
 @testset "list_spectra Tests" begin listtest() end
 @testset "load_spectra Tests" begin global spectrum = loadtest()[1] end
