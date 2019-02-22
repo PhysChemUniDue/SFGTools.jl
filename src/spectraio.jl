@@ -225,7 +225,7 @@ function get_attribute(id::Int64, attr::AbstractString)
             "twin2_wavelength" => dict["twins"]["twin2 wavelength"],
             "twin1_shutter" => dict["twins"]["twin1 shutter"],
             "twin2_shutter" => dict["twins"]["twin2 shutter"],
-            "pump_ir_wavelength" => dict[""]["ekspla wavelength"], #TODO
+            "pump_ir_wavelength" => dict["ekspla laser"]["ekspla wavelength"], #TODO
             "micos_position_x" => dict["smc stages"]["xpos"],
             "micos_position_y" => dict["smc stages"]["ypos"],
             "micos_position_z" => dict["smc stages"]["zpos"],
