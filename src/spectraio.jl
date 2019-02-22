@@ -425,7 +425,7 @@ function get_metadata(path::AbstractString)
 
     if format == :xml
         # get the first metadatafile to extract the keys and initialize arrays
-        # with the values of the rigth type
+        # with the values of the right type
         dict_first = read_xml(paths[1])
         dictkeys = keys(dict_first) #the values of these keys can be dictionaries
         if length(paths) > 1
@@ -458,7 +458,7 @@ function get_metadata(path::AbstractString)
                 else
                     val = dict[dictkey]
                     push!(mdict[dictkey], val)
-                    break # otherwise we loop through all the keys
+                    continue # otherwise we loop through all the keys
                 end
             end
         elseif length(paths) == 1
@@ -520,6 +520,9 @@ function get_metadata(path::AbstractString)
           end
         end
     end
+
+    # We need the comment only once
+    mdict["comment"] = mdict["comment"][1]
 
     return mdict
   end
