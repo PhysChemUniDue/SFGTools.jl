@@ -131,7 +131,7 @@ of the spectra.
 
 ``s_{b,d,f} = s_{b,d} / f_{b,d,norm}``
 
-If no bias is provided <b> equals zero.
+If no bias is provided ``<b>`` equals zero.
 """
 function fieldcorrection!(spectrum::AbstractArray{T,3};
                           bias=Array{Float64}(undef,0,0,0)::AbstractArray{T,3},
