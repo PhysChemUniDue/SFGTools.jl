@@ -242,7 +242,7 @@ function get_attribute(id::Int64, attr::AbstractString)
             "micos_position_y" => dict["smc stages"]["ypos"],
             "micos_position_z" => dict["smc stages"]["zpos"],
             "probe_ir_power" => dict["ir power meters"]["probe ir power"] |> flattendictarray,
-            "pump_ir_power" => dict["ir power meters"]["probe ir power"] |> flattendictarray,
+            "pump_ir_power" => dict["ir power meters"]["pump ir power"] |> flattendictarray,
             "vis_power" => dict["pm100usb"]["sample power"],
         )
         return translate[attr]
