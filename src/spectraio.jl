@@ -198,6 +198,18 @@ function get_attribute(s::Array{SFSpectrum}, attr::AbstractString)
 end
 
 function get_attribute(id::Int64, attr::AbstractString)
+
+    """
+    Flattens an array of dicts into a dict of arrays.
+    """
+    function flattendictarray(dictarray)
+    d = Dict()
+        for k in keys(dictarray[1])
+            d[k] = [x[k] for x in dictarray]
+        end
+    d
+    end
+
     dict = get_metadata(id)
     # check if we deal with an old txt metadatafile or a new xml metadata file
     # (the old one should have an x_binning key somewhere)
@@ -225,10 +237,13 @@ function get_attribute(id::Int64, attr::AbstractString)
             "twin2_wavelength" => dict["twins"]["twin2 wavelength"],
             "twin1_shutter" => dict["twins"]["twin1 shutter"],
             "twin2_shutter" => dict["twins"]["twin2 shutter"],
-            "pump_ir_wavelength" => dict[""]["ekspla wavelength"], #TODO
+            "pump_ir_wavelength" => dict["ekspla laser"]["ekspla wavelength"],
             "micos_position_x" => dict["smc stages"]["xpos"],
             "micos_position_y" => dict["smc stages"]["ypos"],
             "micos_position_z" => dict["smc stages"]["zpos"],
+            "probe_ir_power" => dict["ir power meters"]["probe ir power"] |> flattendictarray,
+            "pump_ir_power" => dict["ir power meters"]["probe ir power"] |> flattendictarray,
+            "vis_power" => dict["pm100usb"]["sample power"],
         )
         return translate[attr]
     end
@@ -425,7 +440,7 @@ function get_metadata(path::AbstractString)
 
     if format == :xml
         # get the first metadatafile to extract the keys and initialize arrays
-        # with the values of the rigth type
+        # with the values of the right type
         dict_first = read_xml(paths[1])
         dictkeys = keys(dict_first) #the values of these keys can be dictionaries
         if length(paths) > 1
@@ -458,7 +473,7 @@ function get_metadata(path::AbstractString)
                 else
                     val = dict[dictkey]
                     push!(mdict[dictkey], val)
-                    break # otherwise we loop through all the keys
+                    continue # otherwise we loop through all the keys
                 end
             end
         elseif length(paths) == 1
@@ -520,6 +535,9 @@ function get_metadata(path::AbstractString)
           end
         end
     end
+
+    # We need the comment only once
+    mdict["comment"] = mdict["comment"][1]
 
     return mdict
   end
