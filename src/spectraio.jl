@@ -286,7 +286,7 @@ function read_as_3D(path::AbstractString; format=:sif)
 
     if format == :sif
         # transpose the image that's loaded from the sif file
-        I = load(joinpath(path, filelist[1]))'
+        I = load(joinpath(path, filelist[1]))
         C = Array{eltype(I),3}(undef, size(I,1), size(I,2), length(filelist))
         C[:,:,1] .= I
     elseif format == :tiff
@@ -296,7 +296,7 @@ function read_as_3D(path::AbstractString; format=:sif)
     end
     @inbounds for i = 2:length(filelist)
         if format == :sif
-            C[:,:,i] .= load(joinpath(path, filelist[i]))'
+            C[:,:,i] .= load(joinpath(path, filelist[i]))
         elseif format == :tiff
             C[:,:,i] .= load(joinpath(path, filelist[i]))
         end
