@@ -540,7 +540,7 @@ function get_metadata(path::AbstractString)
     end
 
     # We need the comment only once
-    length(mfiles) > 1 && (mdict["comment"] = mdict["comment"][1])
+    # length(mfiles) > 1 && (mdict["comment"] = mdict["comment"][1])
 
     return mdict
   end
