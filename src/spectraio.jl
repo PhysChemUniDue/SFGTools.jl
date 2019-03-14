@@ -412,7 +412,7 @@ function get_metadata(id::Int64)
 end
 
 function get_metadata(path::AbstractString)
-
+    @show path
     path == "" && (return Dict())
 
     mdict = Dict{String, Any}()
@@ -540,7 +540,7 @@ function get_metadata(path::AbstractString)
     end
 
     # We need the comment only once
-    mdict["comment"] = mdict["comment"][1]
+    length(mfiles) > 1 && (mdict["comment"] = mdict["comment"][1])
 
     return mdict
   end
