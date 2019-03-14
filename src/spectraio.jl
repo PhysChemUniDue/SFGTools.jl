@@ -412,7 +412,7 @@ function get_metadata(id::Int64)
 end
 
 function get_metadata(path::AbstractString)
-    @show path
+    path
     path == "" && (return Dict())
 
     mdict = Dict{String, Any}()
