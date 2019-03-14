@@ -112,6 +112,9 @@ function grab(dir="./"; getall=false)
                     format = :txt
                 end
 
+                # if still empty throw an error
+                isempty(mlist) && error("No meta files found in $(root)/$(dir)")
+
                 mdict = get_metadata(joinpath(root, dir, mlist[1]))
 
                 # Get ID
