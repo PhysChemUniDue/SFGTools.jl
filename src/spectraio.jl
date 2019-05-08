@@ -38,7 +38,7 @@ function list_spectra(; exact=""::AbstractString,
     error("The file $spectrafile does not exist.")
   end
 
-  df = CSV.read(spectrafile; allowmissing=:none)
+  df = CSV.File(spectrafile; allowmissing=:none) |> DataFrame
 
   # Filter the dataframe
   if exact != ""
