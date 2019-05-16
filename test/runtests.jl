@@ -36,6 +36,8 @@ function attribute_test(spectrum)
     @test typeof(meta) == Dict{String,Any}
     attr = get_attribute(spectrum, "ccd_exposure_time")
     @test attr == Any[0.5, 0.5, 0.5, 0.5, 0.5]
+    wn = get_ir_wavenumber(spectrum)
+    @test typeof(wn) == Array{Float64,1}
 end
 
 function fieldcorrection_test()
