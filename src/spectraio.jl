@@ -224,7 +224,7 @@ function get_attribute(id::Int64, attr::AbstractString)
     elseif format == :xml
         # format is xml lookup the dictionary to get to the right entry
         translate = Dict(
-            "name" => split(getdir(id), '/')[end-2],
+            "name" => splitpath(getdir(id), '/')[end-2],
             "comment" => dict["comment"],
             "grating" => "n/a", #dict["spectra pro 300"]["grating"],
             "spectrometer_wavelength" => dict["spectra pro 300"]["wavelength set"],
