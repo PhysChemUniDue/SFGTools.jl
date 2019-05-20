@@ -222,10 +222,16 @@ function get_attribute(id::Int64, attr::AbstractString)
         attr in keys(dict) ? val = dict[attr] : val = nothing
         return val
     elseif format == :xml
+        # check if there is a comment
+        try
+            comment = dict["comment"]
+        catch
+            comment = ""
+        end
         # format is xml lookup the dictionary to get to the right entry
         translate = Dict(
             "name" => splitpath(getdir(id))[end-2],
-            "comment" => dict["comment"],
+            "comment" => comment,
             "grating" => "n/a", #dict["spectra pro 300"]["grating"],
             "spectrometer_wavelength" => dict["spectra pro 300"]["wavelength set"],
             "mirror_position" => "n/a", #dict["spectra pro 300"]["mirror position"],
