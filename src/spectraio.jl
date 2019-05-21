@@ -213,7 +213,7 @@ function get_attribute(id::Int64, attr::AbstractString)
     d
     end
 
-    dict = get_metadata(id)
+    @show dict = get_metadata(id)
     # check if we deal with an old txt metadatafile or a new xml metadata file
     # (the old one should have an x_binning key somewhere)
     haskey(dict, "x_binning") ? (format = :txt) : (format = :xml)
@@ -222,16 +222,10 @@ function get_attribute(id::Int64, attr::AbstractString)
         attr in keys(dict) ? val = dict[attr] : val = nothing
         return val
     elseif format == :xml
-        # check if there is a comment
-        try
-            comment = dict["comment"]
-        catch
-            comment = ""
-        end
         # format is xml lookup the dictionary to get to the right entry
         translate = Dict(
             "name" => splitpath(getdir(id))[end-2],
-            "comment" => comment,
+            "comment" => dict["comment"],
             "grating" => "n/a", #dict["spectra pro 300"]["grating"],
             "spectrometer_wavelength" => dict["spectra pro 300"]["wavelength set"],
             "mirror_position" => "n/a", #dict["spectra pro 300"]["mirror position"],
@@ -389,6 +383,7 @@ function read_xml(path::String)
         "Refnum"  => String,
         "DBL"     => Float32,
         "I32"     => Int32,
+        "U8"      => UInt8,
         "String"  => String,
         "Boolean" => Bool,
     )
@@ -467,10 +462,9 @@ function get_metadata(path::AbstractString)
                 else
                     val = dict_first[dictkey]
                     valtype = typeof(val)
-                    val, valtype
                     # Put the values
                     mdict[dictkey] = valtype[val]
-                    continue # otherwise we loop through all the keys
+                    # continue # otherwise we loop through all the keys
                 end
             end
             for i = 2:length(paths), dictkey in dictkeys, k in keys(dict_first[dictkey])
@@ -482,7 +476,7 @@ function get_metadata(path::AbstractString)
                 else
                     val = dict[dictkey]
                     push!(mdict[dictkey], val)
-                    continue # otherwise we loop through all the keys
+                    # continue # otherwise we loop through all the keys
                 end
             end
         elseif length(paths) == 1
@@ -547,6 +541,7 @@ function get_metadata(path::AbstractString)
 
     # We need the comment only once
     # length(mfiles) > 1 && (mdict["comment"] = mdict["comment"][1])
+    !haskey(mdict, "comment") && (mdict["comment"] = "")
 
     return mdict
   end
