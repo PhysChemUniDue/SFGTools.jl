@@ -38,7 +38,7 @@ function list_spectra(; exact=""::AbstractString,
     error("The file $spectrafile does not exist.")
   end
 
-  df = CSV.File(spectrafile; allowmissing=:none) |> DataFrame
+  df = CSV.File(spectrafile) |> DataFrame
 
   # Filter the dataframe
   if exact != ""
@@ -317,7 +317,7 @@ end
 Get the directory of a spectrum with a given id. If the ID does not exist return an empty string.
 """
 function getdir(id::Int64)
-    df = CSV.read(".spectralist"; allowmissing=:none)
+    df = CSV.read(".spectralist")
     idx = findall((in)(id), df[:id])
     isempty(idx) && error("Could not find spectrum with id $id.")
     dir = df[:path][idx[1]]
@@ -339,7 +339,7 @@ function read_xml(path::String)
                     # Module Data
                     clustername = LightXML.find_element(e, "Name") |> LightXML.content
                     # Get rid of the Module Data in the Name of the Cluster,
-                    # strip whitspace, make lowercase
+                    # strip whitespace, make lowercase
                     clustername_clean =
                         replace(clustername, "Module Data" => "") |> strip |> lowercase
                     # println("Found Cluster: $clustername")
