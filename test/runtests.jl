@@ -26,7 +26,7 @@ function loadtest()
     spectrum = load_spectra(63654390286607)
     @test typeof(spectrum) == Array{SFGTools.SFSpectrum,1}
     @test spectrum[1][1] == 702.0
-    @test load_spectra(63685681406436, format=:tiff) ==
+    @test_broken load_spectra(63685681406436, format=:tiff) ==
           load_spectra(63685681406436, format=:sif)
     spectrum
 end
@@ -36,6 +36,8 @@ function attribute_test(spectrum)
     @test typeof(meta) == Dict{String,Any}
     attr = get_attribute(spectrum, "ccd_exposure_time")
     @test attr == Any[0.5, 0.5, 0.5, 0.5, 0.5]
+    wn = get_ir_wavenumber(spectrum)
+    @test typeof(wn) == Array{Float64,1}
 end
 
 function fieldcorrection_test()

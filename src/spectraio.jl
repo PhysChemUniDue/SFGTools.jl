@@ -38,7 +38,7 @@ function list_spectra(; exact=""::AbstractString,
     error("The file $spectrafile does not exist.")
   end
 
-  df = CSV.read(spectrafile; allowmissing=:none)
+  df = CSV.File(spectrafile; allowmissing=:none) |> DataFrame
 
   # Filter the dataframe
   if exact != ""
@@ -213,7 +213,7 @@ function get_attribute(id::Int64, attr::AbstractString)
     d
     end
 
-    dict = get_metadata(id)
+    @show dict = get_metadata(id)
     # check if we deal with an old txt metadatafile or a new xml metadata file
     # (the old one should have an x_binning key somewhere)
     haskey(dict, "x_binning") ? (format = :txt) : (format = :xml)
@@ -224,7 +224,7 @@ function get_attribute(id::Int64, attr::AbstractString)
     elseif format == :xml
         # format is xml lookup the dictionary to get to the right entry
         translate = Dict(
-            "name" => split(getdir(id), '/')[end-2],
+            "name" => splitpath(getdir(id))[end-2],
             "comment" => dict["comment"],
             "grating" => "n/a", #dict["spectra pro 300"]["grating"],
             "spectrometer_wavelength" => dict["spectra pro 300"]["wavelength set"],
@@ -338,7 +338,7 @@ function read_xml(path::String)
                     # Module Data
                     clustername = LightXML.find_element(e, "Name") |> LightXML.content
                     # Get rid of the Module Data in the Name of the Cluster,
-                    # strip whitspace, make lowercase
+                    # strip whitespace, make lowercase
                     clustername_clean =
                         replace(clustername, "Module Data" => "") |> strip |> lowercase
                     # println("Found Cluster: $clustername")
@@ -349,7 +349,7 @@ function read_xml(path::String)
                     # println("Found Element $n with value $v")
                     global dict[n] = v
                 end
-            elseif any(LightXML.name(e) .== ["NumElts", "Name", "Dimsize"])
+            elseif any(LightXML.name(e) .== ["NumElts", "Name", "Dimsize", "U8"])
                 # Ignore entry
                 # println("Ignoring")
                 continue
@@ -383,6 +383,7 @@ function read_xml(path::String)
         "Refnum"  => String,
         "DBL"     => Float32,
         "I32"     => Int32,
+        "U8"      => UInt8,
         "String"  => String,
         "Boolean" => Bool,
     )
@@ -461,10 +462,9 @@ function get_metadata(path::AbstractString)
                 else
                     val = dict_first[dictkey]
                     valtype = typeof(val)
-                    val, valtype
                     # Put the values
                     mdict[dictkey] = valtype[val]
-                    continue # otherwise we loop through all the keys
+                    # continue # otherwise we loop through all the keys
                 end
             end
             for i = 2:length(paths), dictkey in dictkeys, k in keys(dict_first[dictkey])
@@ -476,7 +476,7 @@ function get_metadata(path::AbstractString)
                 else
                     val = dict[dictkey]
                     push!(mdict[dictkey], val)
-                    continue # otherwise we loop through all the keys
+                    # continue # otherwise we loop through all the keys
                 end
             end
         elseif length(paths) == 1
@@ -541,6 +541,7 @@ function get_metadata(path::AbstractString)
 
     # We need the comment only once
     # length(mfiles) > 1 && (mdict["comment"] = mdict["comment"][1])
+    !haskey(mdict, "comment") && (mdict["comment"] = "")
 
     return mdict
   end
