@@ -206,6 +206,7 @@ function get_attribute(id::Int64, attr::AbstractString)
     Flattens an array of dicts into a dict of arrays.
     """
     function flattendictarray(dictarray)
+    typeof(dictarray) <: Dict && (return dictarray)
     d = Dict()
         for k in keys(dictarray[1])
             d[k] = [x[k] for x in dictarray]
@@ -213,7 +214,7 @@ function get_attribute(id::Int64, attr::AbstractString)
     d
     end
 
-    @show dict = get_metadata(id)
+    dict = get_metadata(id)
     # check if we deal with an old txt metadatafile or a new xml metadata file
     # (the old one should have an x_binning key somewhere)
     haskey(dict, "x_binning") ? (format = :txt) : (format = :xml)
