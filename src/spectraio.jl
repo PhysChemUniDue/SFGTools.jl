@@ -81,58 +81,112 @@ to the function.
 
 Returns the number of added spectra and the number of spectra in total.
 """
-function grab(dir="./"; getall=false)
+function grab(dir="./"; getall=false, singledata="")
 
-    # Check if the .spectralist file exists.
-    # If it exist read its contents.
-    if !isfile(".spectralist") || getall
+
+    #grab single data folder in $singledata?
+    if singledata != ""
+
         idexisting = Int64[]
-    else
-        df = CSV.read(".spectralist")
-        idexisting = convert.(Int64, df[:id])
-    end
+        idlist = Int64[]
+        namelist = String[]
+        dirlist = String[]
+        datelist = DateTime[]
+        sizelist = []
+        numlist = Int64[]
 
-    idlist = Int64[]
-    namelist = String[]
-    dirlist = String[]
-    datelist = DateTime[]
-    sizelist = []
-    numlist = Int64[]
+        for (root, dirs, files) in walkdir(singledata)
+            for dir in dirs
+                if dir == "raw"
 
-    for (root, dirs, files) in walkdir(dir)
-        for dir in dirs
-            if dir == "raw"
+                    # search for xml files first
+                    format = :xml
+                    mlist = searchdir(joinpath(root, dir), "data.xml")
 
-                # search for xml files first
-                format = :xml
-                mlist = searchdir(joinpath(root, dir), "data.xml")
-                # if the list is empty search for txt files
-                if isempty(mlist)
-                    mlist = searchdir(joinpath(root, dir), "data.txt")
-                    format = :txt
-                end
+                    # if still empty throw an error
+                    isempty(mlist) && error("No meta files found in $(root)/$(dir)")
 
-                # if still empty throw an error
-                isempty(mlist) && error("No meta files found in $(root)/$(dir)")
+                    mdict = get_metadata(joinpath(root, dir, mlist[1]))
 
-                mdict = get_metadata(joinpath(root, dir, mlist[1]))
-
-                # Get ID
-                id = Int64(Dates.value(DateTime(mdict["timestamp"])))
-                if !any(idexisting .== id)
-                    push!(idlist, id)
-                    push!(namelist, splitdir(splitdir(root)[1])[2])
-                    push!(dirlist, joinpath(abspath(root), dir))
-                    push!(datelist, DateTime(mdict["timestamp"]))
-                    if format == :xml
-                        sif_files = searchdir(joinpath(root, dir), "data.sif")
-                        filestats = stat(joinpath(root, dir, sif_files[1]))
-                        specsize = filestats.size
-                        push!(sizelist, specsize)
-                    elseif format == :txt
-                        push!(sizelist, Int64[N_PIXEL/mdict["x_binning"], N_PIXEL/mdict["y_binning"], length(mlist)])
+                    # Get ID
+                    id = Int64(Dates.value(DateTime(mdict["timestamp"])))
+                    if !any(idexisting .== id)
+                        push!(idlist, id)
+                        push!(namelist, splitdir(splitdir(root)[1])[2])
+                        push!(dirlist, joinpath(abspath(root), dir))
+                        push!(datelist, DateTime(mdict["timestamp"]))
+                        if format == :xml
+                            sif_files = searchdir(joinpath(root, dir), "data.sif")
+                            filestats = stat(joinpath(root, dir, sif_files[1]))
+                            specsize = filestats.size
+                            push!(sizelist, specsize)
+                        elseif format == :txt
+                            push!(sizelist, Int64[N_PIXEL/mdict["x_binning"], N_PIXEL/mdict["y_binning"], length(mlist)])
+                        end
+                        push!(numlist, parse(Int64, splitdir(splitdir(dirlist[end])[1])[2]))
                     end
-                    push!(numlist, parse(Int64, splitdir(splitdir(dirlist[end])[1])[2]))
+                end
+            end
+        end
+
+        # # create new SPECTRALIST file
+        # df = DataFrame(id=idlist, name=namelist, path=dirlist, date=datelist, sizes=sizelist, number=numlist)
+        # CSV.write(".spectralist", df; append=false)
+
+    # grab all spectra files
+    else
+
+        # Check if the .spectralist file exists.
+        # If it exist read its contents.
+        if !isfile(".spectralist") || getall
+            idexisting = Int64[]
+        else
+            df = CSV.read(".spectralist")
+            idexisting = convert.(Int64, df[:id])
+        end
+
+        idlist = Int64[]
+        namelist = String[]
+        dirlist = String[]
+        datelist = DateTime[]
+        sizelist = []
+        numlist = Int64[]
+
+        for (root, dirs, files) in walkdir(dir)
+            for dir in dirs
+                if dir == "raw"
+
+                    # search for xml files first
+                    format = :xml
+                    mlist = searchdir(joinpath(root, dir), "data.xml")
+                    # if the list is empty search for txt files
+                    if isempty(mlist)
+                        mlist = searchdir(joinpath(root, dir), "data.txt")
+                        format = :txt
+                    end
+
+                    # if still empty throw an error
+                    isempty(mlist) && error("No meta files found in $(root)/$(dir)")
+
+                    mdict = get_metadata(joinpath(root, dir, mlist[1]))
+
+                    # Get ID
+                    id = Int64(Dates.value(DateTime(mdict["timestamp"])))
+                    if !any(idexisting .== id)
+                        push!(idlist, id)
+                        push!(namelist, splitdir(splitdir(root)[1])[2])
+                        push!(dirlist, joinpath(abspath(root), dir))
+                        push!(datelist, DateTime(mdict["timestamp"]))
+                        if format == :xml
+                            sif_files = searchdir(joinpath(root, dir), "data.sif")
+                            filestats = stat(joinpath(root, dir, sif_files[1]))
+                            specsize = filestats.size
+                            push!(sizelist, specsize)
+                        elseif format == :txt
+                            push!(sizelist, Int64[N_PIXEL/mdict["x_binning"], N_PIXEL/mdict["y_binning"], length(mlist)])
+                        end
+                        push!(numlist, parse(Int64, splitdir(splitdir(dirlist[end])[1])[2]))
+                    end
                 end
             end
         end
@@ -145,7 +199,7 @@ function grab(dir="./"; getall=false)
     #     CSV.write(f, df)
     # end
 
-    if !isfile(".spectralist") || getall
+    if !isfile(".spectralist") || getall || singledata != ""
         CSV.write(".spectralist", df; append=false)
     else
         CSV.write(".spectralist", df; append=true)
