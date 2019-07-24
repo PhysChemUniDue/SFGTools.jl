@@ -47,7 +47,7 @@ end
     end
   end
 
-  s = reshape(r, size(s))
+  s .= reshape(r, size(s))
 
   num_removed_events
 end
