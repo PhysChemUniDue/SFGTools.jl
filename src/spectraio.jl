@@ -69,7 +69,7 @@ end
 
 
 """
-    grab(dir="./"; getall=false)
+    grab(dir="./"; getall=false, singledata="")
 
 Make a data file that contains information where to find spectra connected to
 an ID. All spectra are internally referenced by this id. `dir` is the main data
@@ -80,6 +80,8 @@ If you want to rewrite the whole file pass `getall=true` as a keyword argument
 to the function.
 
 Returns the number of added spectra and the number of spectra in total.
+
+Optional: specify a single data folder to grab with singledata="path/to/datafolder"
 """
 function grab(dir="./"; getall=false, singledata="")
 
