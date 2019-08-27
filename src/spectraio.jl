@@ -38,7 +38,7 @@ function list_spectra(; exact=""::AbstractString,
     error("The file $spectrafile does not exist.")
   end
 
-  df = CSV.File(spectrafile) |> DataFrame
+  df = CSV.File(spectrafile, allowmissing=:none) |> DataFrame
 
   # Filter the dataframe
   if exact != ""
@@ -57,7 +57,7 @@ function list_spectra(; exact=""::AbstractString,
 
   if group
       df = by(df, :name, df -> DataFrame(
-        N = length(df[:id]),
+        N = length(df.id),
         sizes = [unique(df[:sizes])],
         dates = [unique(floor.(df[:date], Dates.Day(1)))],
         id = [df[:id]]))
