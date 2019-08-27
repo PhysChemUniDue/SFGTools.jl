@@ -22,7 +22,7 @@ Filter the dataframe:
 
 The result with some useful information is stored in a DataFrame. No spectra are
 loaded hereby to save time. Load the actual spectra via `load_spectra(id)`
-where `id` is `list_spectra()[:id]` See the DataFrames package for more info.
+where `id` is `list_spectra().id` See the DataFrames package for more info.
 """
 function list_spectra(; exact=""::AbstractString,
                         inexact=""::AbstractString,
@@ -38,15 +38,15 @@ function list_spectra(; exact=""::AbstractString,
     error("The file $spectrafile does not exist.")
   end
 
-  df = CSV.File(spectrafile, allowmissing=:none) |> DataFrame
+  df = CSV.File(spectrafile) |> DataFrame
 
   # Filter the dataframe
   if exact != ""
-      df = df[lowercase.(df[:name]) .== lowercase(exact), :]
+      df = df[lowercase.(df.name) .== lowercase(exact), :]
   end
 
   if inexact != ""
-      df = df[occursin.(lowercase(inexact), lowercase.(df[:name])), :]
+      df = df[occursin.(lowercase(inexact), lowercase.(df.name)), :]
   end
 
   if !all(iszero.(date))
@@ -58,9 +58,9 @@ function list_spectra(; exact=""::AbstractString,
   if group
       df = by(df, :name, df -> DataFrame(
         N = length(df.id),
-        sizes = [unique(df[:sizes])],
-        dates = [unique(floor.(df[:date], Dates.Day(1)))],
-        id = [df[:id]]))
+        sizes = [unique(df.sizes)],
+        dates = [unique(floor.(df.date, Dates.Day(1)))],
+        id = [df.id]))
   end
 
   return df
@@ -144,7 +144,7 @@ function grab(dir="./"; getall=false, singledata="")
             idexisting = Int64[]
         else
             df = CSV.read(".spectralist")
-            idexisting = convert.(Int64, df[:id])
+            idexisting = convert.(Int64, df.id)
         end
 
         idlist = Int64[]
@@ -374,9 +374,9 @@ Get the directory of a spectrum with a given id. If the ID does not exist return
 """
 function getdir(id::Int64)
     df = CSV.read(".spectralist")
-    idx = findall((in)(id), df[:id])
+    idx = findall((in)(id), df.id)
     isempty(idx) && error("Could not find spectrum with id $id.")
-    dir = df[:path][idx[1]]
+    dir = df.path[idx[1]]
 end
 
 
