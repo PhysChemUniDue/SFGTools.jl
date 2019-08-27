@@ -440,6 +440,7 @@ function read_xml(path::String)
         "Refnum"  => String,
         "DBL"     => Float32,
         "I32"     => Int32,
+        "I64"     => Int64,
         "U8"      => UInt8,
         "String"  => String,
         "Boolean" => Bool,
