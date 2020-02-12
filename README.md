@@ -7,7 +7,7 @@ From the REPL do
 ```julia
 julia> using Pkg
 julia> Pkg.add("https://github.com/MLackner/AndorSIF.jl#v1.0fixes")
-julia> Pkg.add("https://github.com/PhysChemUniDue/SFGTools.jl")
+julia> Pkg.add("https://github.com/PhysChemUniDue/SFGTools.jl#master")
 ```
 
 ## Usage
