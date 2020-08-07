@@ -50,7 +50,7 @@ function list_spectra(; exact=""::AbstractString,
   end
 
   if !all(iszero.(date))
-      df = df[Dates.yearmonthday.(df[:date]) .== [date], :]
+      df = df[Dates.yearmonthday.(df.date) .== [date], :]
   end
 
   sort!(df)
@@ -553,7 +553,7 @@ function get_metadata(path::AbstractString)
         end
         if length(sif_files) == 1
             # load the first metadata
-            ixon_meta = load(sif_files[1]).properties["ixon"]
+            ixon_meta = load(sif_files[1]).ixon
             mdict["ixon"] = ixon_meta
         elseif length(sif_files) > 1
             # load the first metadata
