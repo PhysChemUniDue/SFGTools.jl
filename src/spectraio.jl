@@ -56,11 +56,14 @@ function list_spectra(; exact=""::AbstractString,
   sort!(df)
 
   if group
-      df = by(df, :name, df -> DataFrame(
-        N = length(df.id),
-        sizes = [unique(df.sizes)],
-        dates = [unique(floor.(df.date, Dates.Day(1)))],
-        id = [df.id]))
+      df = combine(df -> DataFrame(
+            N = length(df.id),
+            sizes = [unique(df.sizes)],
+            dates = [unique(floor.(df.date, Dates.Day(1)))],
+            id = [df.id]
+        ),
+        groupby(df, :name)
+      )
   end
 
   return df
@@ -143,7 +146,7 @@ function grab(dir="./"; getall=false, singledata="")
         if !isfile(".spectralist") || getall
             idexisting = Int64[]
         else
-            df = CSV.read(".spectralist")
+            df = CSV.read(".spectralist", DataFrame)
             idexisting = convert.(Int64, df.id)
         end
 
@@ -373,7 +376,7 @@ end
 Get the directory of a spectrum with a given id. If the ID does not exist return an empty string.
 """
 function getdir(id::Int64)
-    df = CSV.read(".spectralist")
+    df = CSV.read(".spectralist", DataFrame)
     idx = findall((in)(id), df.id)
     isempty(idx) && error("Could not find spectrum with id $id.")
     dir = df.path[idx[1]]
