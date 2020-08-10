@@ -507,6 +507,7 @@ function get_metadata(path::AbstractString)
         # get the first metadatafile to extract the keys and initialize arrays
         # with the values of the right type
         dict_first = read_xml(paths[1])
+        display(dict_first)
         dictkeys = keys(dict_first) #the values of these keys can be dictionaries
         if length(paths) > 1
             for dictkey in dictkeys, k in keys(dict_first[dictkey])
@@ -560,7 +561,7 @@ function get_metadata(path::AbstractString)
             mdict["ixon"] = ixon_meta
         elseif length(sif_files) > 1
             # load the first metadata
-            ixon_meta = load(sif_files[1]).properties["ixon"]
+            ixon_meta = load(sif_files[1]).ixon
             mdict["ixon"] = Dict{String, Any}()
             for key in keys(ixon_meta)
                 val = ixon_meta[key]
@@ -570,7 +571,7 @@ function get_metadata(path::AbstractString)
             end
             # and loop through the remaining spectra in the folder
             for i = 2:length(sif_files), key in keys(ixon_meta)
-                dict = load(joinpath(path, sif_files[i])).properties["ixon"]
+                dict = load(joinpath(path, sif_files[i])).ixon
                 push!(mdict["ixon"][key], dict[key])
             end
         else

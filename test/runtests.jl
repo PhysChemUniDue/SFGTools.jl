@@ -23,12 +23,13 @@ function listtest()
 end
 
 function loadtest()
-    @test load_spectra(63685681406436)[1][1] > 0 #TODO: make meaningful
     spectrum = load_spectra(63654390286607)
     @test typeof(spectrum) == Array{SFGTools.SFSpectrum,1}
     @test spectrum[1][1] == 702.0
     @test_broken load_spectra(63685681406436, format=:tiff) ==
           load_spectra(63685681406436, format=:sif)
+    spectrum = load_spectra(63685681406436)
+    @show typeof(spectrum)
     spectrum
 end
 
