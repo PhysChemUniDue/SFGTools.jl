@@ -1,0 +1,245 @@
+<Cluster><String>
+	<Name>Comment</Name>
+	<Val>ssp
+Ekspla Zero 78400</Val>
+</String>
+<String>
+<Name>Timestamp</Name>
+<Val>2020-05-20T17:52:56.483</Val>
+</String>
+<Cluster>
+<Name>Ekspla Laser Module Data</Name>
+<NumElts>3</NumElts>
+<String>
+<Name>Status</Name>
+<Val>Ekspla Initialized</Val>
+</String>
+<DBL>
+<Name>Ekspla Wavelength</Name>
+<Val>3430.00000000000000</Val>
+</DBL>
+<DBL>
+<Name>Ekspla Amplification</Name>
+<Val>42.00000000000000</Val>
+</DBL>
+</Cluster>
+<Cluster>
+<Name>Spectra Pro 300 Module Data</Name>
+<NumElts>3</NumElts>
+<String>
+<Name>Status</Name>
+<Val>Initial Message</Val>
+</String>
+<Refnum>
+<Name>VISA resource name</Name>
+<RefKind>VISA</RefKind>
+<Val>COM2</Val>
+</Refnum>
+<DBL>
+<Name>Wavelength Set</Name>
+<Val>446.00000000000000</Val>
+</DBL>
+</Cluster>
+<Cluster>
+<Name>Twins Module Data</Name>
+<NumElts>4</NumElts>
+<Boolean>
+<Name>Twin2 Shutter</Name>
+<Val>1</Val>
+</Boolean>
+<Boolean>
+<Name>Twin1 Shutter</Name>
+<Val>0</Val>
+</Boolean>
+<DBL>
+<Name>Twin1 Wavelength</Name>
+<Val>0.00000000000000</Val>
+</DBL>
+<DBL>
+<Name>Twin2 Wavelength</Name>
+<Val>3300.00000000000000</Val>
+</DBL>
+</Cluster>
+<Cluster>
+<Name>LS-180 Module Data</Name>
+<NumElts>3</NumElts>
+<String>
+<Name>Status</Name>
+<Val>Initial Message</Val>
+</String>
+<Refnum>
+<Name>VISA resource name</Name>
+<RefKind>VISA</RefKind>
+<Val>COM4</Val>
+</Refnum>
+<I32>
+<Name>Pos</Name>
+<Val>67879</Val>
+</I32>
+</Cluster>
+<Cluster>
+<Name>SMC Stages Module Data</Name>
+<NumElts>5</NumElts>
+<String>
+<Name>Status</Name>
+<Val>Initial Message</Val>
+</String>
+<Refnum>
+<Name>VISA Resource Name</Name>
+<RefKind>VISA</RefKind>
+<Val>COM9</Val>
+</Refnum>
+<DBL>
+<Name>XPos</Name>
+<Val>31500.00000000000000</Val>
+</DBL>
+<DBL>
+<Name>YPos</Name>
+<Val>18561.70000000000070</Val>
+</DBL>
+<DBL>
+<Name>ZPos</Name>
+<Val>554.89999999999998</Val>
+</DBL>
+</Cluster>
+<Cluster>
+<Name>PM100USB Module Data</Name>
+<NumElts>5</NumElts>
+<String>
+<Name>Status</Name>
+<Val>Initial Message</Val>
+</String>
+<Refnum>
+<Name>Instrument Handle</Name>
+<RefKind>VISA</RefKind>
+<Val>USB0::0x1313::0x8072::P2011339::INSTR</Val>
+</Refnum>
+<DBL>
+<Name>Power Value</Name>
+<Val>20.89635660000000</Val>
+</DBL>
+<DBL>
+<Name>Max Power</Name>
+<Val>34.19559450000001</Val>
+</DBL>
+<DBL>
+<Name>Sample Power</Name>
+<Val>20.28408461996808</Val>
+</DBL>
+</Cluster>
+<Cluster>
+<Name>IR Power Meters Module Data</Name>
+<NumElts>4</NumElts>
+<String>
+<Name>Status</Name>
+<Val>Initial Message</Val>
+</String>
+<Array>
+<Name>Device References</Name>
+<Dimsize>2</Dimsize>
+<Refnum>
+<Name>MG17Motor</Name>
+<RefKind>ActiveX</RefKind>
+<ActiveXType>
+<GUID>{83D03B54-E1C4-466F-97A2-CBBF3330927A}</GUID>
+<Name>MG17MotorLib.MG17Motor</Name>
+</ActiveXType>
+<Val>0x33D00001</Val>
+</Refnum>
+<Refnum>
+<Name>MG17Motor</Name>
+<RefKind>ActiveX</RefKind>
+<ActiveXType>
+<GUID>{83D03B54-E1C4-466F-97A2-CBBF3330927A}</GUID>
+<Name>MG17MotorLib.MG17Motor</Name>
+</ActiveXType>
+<Val>0x33C00000</Val>
+</Refnum>
+</Array>
+<Cluster>
+<Name>Probe IR Power</Name>
+<NumElts>4</NumElts>
+<DBL>
+<Name>Mean</Name>
+<Val>2.60381822656052</Val>
+</DBL>
+<DBL>
+<Name>Standard Deviation</Name>
+<Val>0.12444111547731</Val>
+</DBL>
+<DBL>
+<Name>Standard Error</Name>
+<Val>3.93517359480329E-4</Val>
+</DBL>
+<String>
+<Name>Timestamp</Name>
+<Val>2020-05-20T17:52:34.803</Val>
+</String>
+</Cluster>
+<Cluster>
+<Name>Pump IR Power</Name>
+<NumElts>4</NumElts>
+<DBL>
+<Name>Mean</Name>
+<Val>39.71062869903584</Val>
+</DBL>
+<DBL>
+<Name>Standard Deviation</Name>
+<Val>0.20678884547359</Val>
+</DBL>
+<DBL>
+<Name>Standard Error</Name>
+<Val>2.06788845473592E-3</Val>
+</DBL>
+<String>
+<Name>Timestamp</Name>
+<Val>2020-05-20T12:39:36.692</Val>
+</String>
+</Cluster>
+</Cluster>
+<Cluster>
+<Name>Reply Payload</Name>
+<NumElts>4</NumElts>
+<String>
+<Name>Status</Name>
+<Val>"hydra"</Val>
+</String>
+<U8>
+<Name>Connection ID</Name>
+<Val>0</Val>
+</U8>
+<DBL>
+<Name>Position Axis 1</Name>
+<Val>0.00000000000000</Val>
+</DBL>
+<DBL>
+<Name>Position Axis 2</Name>
+<Val>0.00000000000000</Val>
+</DBL>
+</Cluster>
+<Cluster>
+<Name>Reply Payload</Name>
+<NumElts>5</NumElts>
+<String>
+<Name>Status</Name>
+<Val>Initial Message</Val>
+</String>
+<I32>
+<Name>Device ID</Name>
+<Val>1</Val>
+</I32>
+<I32>
+<Name>Position</Name>
+<Val>149250</Val>
+</I32>
+<I32>
+<Name>uPosition</Name>
+<Val>0</Val>
+</I32>
+<I64>
+<Name>encPosition</Name>
+<Val>0</Val>
+</I64>
+</Cluster>
+
+</Cluster>
