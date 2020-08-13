@@ -11,24 +11,24 @@ function listtest()
     grab(SAMPLE_DATA_DIR; getall=true)
     grab(SAMPLE_DATA_DIR)
     df = list_spectra()
-    @test size(df,1) == 211
-    df = list_spectra(date=(2020,5,20))
-    @test size(df,1) == 154
-    df = list_spectra(inexact="ssp")
-    @test size(df,1) == 209
-    df = list_spectra(exact="200518_CaAra_1_13mN_d-pumped_ssp_DLscan")
-    @test size(df,1) == 150
+    @test size(df,1) == 123
+    df = list_spectra(date=(2018,2,15))
+    @test size(df,1) == 118
+    df = list_spectra(inexact="HDT")
+    @test size(df,1) == 78
+    df = list_spectra(exact="HDT_180109A_EksplaScan_FR")
+    @test size(df,1) == 25
     df = list_spectra(group=true)
-    @test size(df,1) == 6
+    @test size(df,1) == 12
 end
 
 function loadtest()
-    spectrum = load_spectra(63725661936614)
+    spectrum = load_spectra(63654390286607)
     @test typeof(spectrum) == Array{SFGTools.SFSpectrum,1}
-    @test spectrum[1][1] == 778.0
-    @test_broken load_spectra(63725661936614, format=:tiff) ==
-          load_spectra(63725661936614, format=:sif)
-    spectrum = load_spectra(63725661936614)
+    @test spectrum[1][1] == 702.0
+    @test_broken load_spectra(63685681406436, format=:tiff) ==
+          load_spectra(63685681406436, format=:sif)
+    spectrum = load_spectra(63685681406436)
     @show typeof(spectrum)
     spectrum
 end
@@ -37,7 +37,7 @@ function attribute_test(spectrum)
     meta = get_metadata(spectrum)
     @test typeof(meta) == Dict{String,Any}
     attr = get_attribute(spectrum, "ccd_exposure_time")
-    @test attr == Any[20.0, 20.0, 20.0, 20.0, 20.0]
+    @test attr == Any[0.5, 0.5, 0.5, 0.5, 0.5]
     wn = get_ir_wavenumber(spectrum)
     @test typeof(wn) == Array{Float64,1}
 end
@@ -91,29 +91,29 @@ function average_test()
     a = Array{Float64,3}(undef, (4, 1, 2))
     a[:,1,1] = [6, 7, 8, 9]
     a[:,1,2] = [6, 8, 9, 7]
-    spectrum1 = SFSpectrum(63725661936614, a)
+    spectrum1 = SFSpectrum(63654399800782, a)
 
     b = Array{Float64,3}(undef, (4, 1, 3))
     b[:,1,1] = [0, 1, 3, 0]
     b[:,1,2] = [2, 1, 1, 0]
     b[:,1,3] = [4, 1, 2, 0]
-    spectrum2 = SFSpectrum(63725661936614, b)
+    spectrum2 = SFSpectrum(63654399800782, b)
 
 
     spectrum = average(spectrum1)
-    @test_broken spectrum[:,1,1] == [6.0, 7.5,  8.5, 8.0]
-    
+    @test spectrum[:,1,1] == [6.0, 7.5,  8.5, 8.0]
+
     spectrum = average(spectrum1, combine = false)
-    @test_broken spectrum[:,1,1] == [6, 7, 8, 9]
-    @test_broken spectrum[:,1,2] == [6, 8, 9, 7]
+    @test spectrum[:,1,1] == [6, 7, 8, 9]
+    @test spectrum[:,1,2] == [6, 8, 9, 7]
 
     spectrum = average(spectrum2)
-    @test_broken spectrum[:,1,1] == [2.0, 1.0, 2.0, 0]
+    @test spectrum[:,1,1] == [2.0, 1.0, 2.0, 0]
 
     spectrum = average(spectrum2, combine = false)
-    @test_broken spectrum[:,1,1] == [0, 1, 3, 0]
-    @test_broken spectrum[:,1,2] == [2, 1, 1, 0]
-    @test_broken spectrum[:,1,3] == [4, 1, 2, 0]
+    @test spectrum[:,1,1] == [0, 1, 3, 0]
+    @test spectrum[:,1,2] == [2, 1, 1, 0]
+    @test spectrum[:,1,3] == [4, 1, 2, 0]
 end
 
 
@@ -146,4 +146,3 @@ end
 @testset "average Test" begin average_test() end
 # spectra = makespectraarray(spectrum)
 # @testset "MAT Saving" begin save_mat_test(spectra) end
-df
