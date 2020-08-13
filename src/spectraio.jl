@@ -350,8 +350,8 @@ function read_as_3D(path::AbstractString; format=:sif)
     if format == :sif
         # transpose the image that's loaded from the sif file
         I = load(joinpath(path, filelist[1]))
-        C = Array{Float64,3}(undef, size(I,1), size(I,2), length(filelist))
-        C[:,:,1] .= I[:,:,1]
+        C = Array{Float64,3}(undef, size(I,2), size(I,1), length(filelist))
+        C[:,:,1] .= permutedims(I[:,:,1], [2, 1])
     elseif format == :tiff
         I = load(joinpath(path, filelist[1]))
         C = Array{eltype(I),3}(undef, size(I,1), size(I,2), length(filelist))
@@ -359,7 +359,7 @@ function read_as_3D(path::AbstractString; format=:sif)
     end
     @inbounds for i = 2:length(filelist)
         if format == :sif
-            C[:,:,i] .= load(joinpath(path, filelist[i]))[:,:,1]
+            C[:,:,i] .= permutedims(load(joinpath(path, filelist[i]))[:,:,1], [2,1])
         elseif format == :tiff
             C[:,:,i] .= load(joinpath(path, filelist[i]))
         end
@@ -507,7 +507,6 @@ function get_metadata(path::AbstractString)
         # get the first metadatafile to extract the keys and initialize arrays
         # with the values of the right type
         dict_first = read_xml(paths[1])
-        display(dict_first)
         dictkeys = keys(dict_first) #the values of these keys can be dictionaries
         if length(paths) > 1
             for dictkey in dictkeys, k in keys(dict_first[dictkey])
