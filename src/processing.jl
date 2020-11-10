@@ -425,7 +425,7 @@ function save_data(sample, sd::Int, pol, st, pump, date)
     # generate filename
     filename = sample *"_"* "$sd"*"mNm" *"_"* "$pol" *"_"* scan_type *"_"* pump_resonance *"_"* sample_prep *".h5"
     
-    # calculate pump wavenumber (Ekspla)
+    # calculate pump wavenumber (Ekspla) for delay scan 
     ekspla_wavelength = get_metadata(raw[1])["ekspla laser"]["ekspla wavelength"][1]
     ekspla_wavenumber = 10^7 / ekspla_wavelength
     
@@ -434,24 +434,49 @@ function save_data(sample, sd::Int, pol, st, pump, date)
         g1 = g_create(g0, surface_density)
         g2 = g_create(g1, polarization)
         g3 = g_create(g2, scan_type)
-        g4 = g_create(g3, pump_resonance)
-        g5 = g_create(g4, date)
-        g6 = g_create(g5, "Data")
-        g6["sig_matrix"] = sig03
-        g6["ref_matrix"] = ref03
-        g6["pump_wavenumber"] = ekspla_wavenumber
-        g6["wavenumber"] = ν
-        g6["dltime"] = dltime_sorted
         
-        for i in 1:length(mode_name)
-            g6["sig_mean_$(mode_name[i])"] = sig04[i][:,1]
+        if scan_type == "delay_scan"
+            g4 = g_create(g3, pump_resonance)
+            g5 = g_create(g4, date)
+            
+            g6 = g_create(g5, "Data")
+            g6["sig_matrix"] = sig03
+            g6["ref_matrix"] = ref03
+            g6["pump_wavenumber"] = ekspla_wavenumber
+            g6["wavenumber"] = ν
+            g6["dltime"] = dltime_sorted
+            
+            for i in 1:length(mode_name)
+                g6["sig_mean_$(mode_name[i])"] = sig04[i][:,1]
+            end
+            
+            for i in 1:length(mode_name)
+                g6["ref_mean_$(mode_name[i])"] = ref04[i][:,1]
+            end
+            
+            g6["comment"] = "Less Vis Power"
+            g6["folder_name"] = directory
+            
+        else scan_type == "wavenumber_scan"
+            g4 = g_create(g3, date)
+            
+            g5 = g_create(g4, "Data")
+            g5["sig_matrix"] = sig03
+            g5["ref_matrix"] = ref03
+            g5["pump_wavenumber"] = ekspla_WN # Ekspla pump wavenumber for wavenumber scan
+            g5["wavenumber"] = ν
+            g5["dltime"] = dltime_sorted
+            
+            for i in 1:length(mode_name)
+                g5["sig_mean_$(mode_name[i])"] = sig04[i][:,1]
+            end
+            
+            for i in 1:length(mode_name)
+                g5["ref_mean_$(mode_name[i])"] = ref04[i][:,1]
+            end
+            
+            g5["comment"] = "Less Vis Power"
+            g5["folder_name"] = directory    
         end
-        
-        for i in 1:length(mode_name)
-            g6["ref_mean_$(mode_name[i])"] = ref04[i][:,1]
-        end
-        
-        g6["comment"] = ""
-        g6["folder_name"] = directory
     end
 end
