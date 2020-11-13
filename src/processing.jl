@@ -390,93 +390,88 @@ end
 # directory = "$date" * "/" * "CaAra_20200504_1_DL-Scan_r--pumped_ppp"
 
 # save data in HDF5 file
-function save_data(sample, sd::Int, pol, st, pump, date)
+    function save_data(sample, sd::Int, pol, st, date)
 
-    # sample surface density
-    surface_density = "$sd mNm⁻¹"
-    
-    # polarization combination
-    if pol == "ppp"
-        polarization = "ppp"
-        elseif pol == "ssp"
-        polarization = "ssp"
-        else 
-        error("""Polarization (pol) has to be "ssp" or "ppp".""")
-    end
-    
-    # scan type (delay or wavenumber scan)
-    if st == "DL" || st == "dl"
-        scan_type = "delay_scan"
-        elseif st == "WN" || st == "wn"
-        scan_type = "wavenumber_scan"
-        else 
-        error("""Scan type (st) has to be "delay_scan" or "wavenumber_scan".""")
-    end
-    
-    # pump resonance
-    if pump == "r-"
-        pump_resonance = "r⁻pumped"
-        elseif pump == "d-"
-        pump_resonance = "d⁻pumped"
-        else 
-        error("""The pump resonance (pump) has to be "r⁻" or "d⁻".""")
-    end
-    
-    # generate filename
-    filename = sample *"_"* "$sd"*"mNm" *"_"* "$pol" *"_"* scan_type *"_"* pump_resonance *"_"* sample_prep *".h5"
-    
-    # calculate pump wavenumber (Ekspla) for delay scan 
-    ekspla_wavelength = get_metadata(raw[1])["ekspla laser"]["ekspla wavelength"][1]
-    ekspla_wavenumber = 10^7 / ekspla_wavelength
-    
-    h5open(filename, "w") do fid
-        g0 = g_create(fid, sample)
-        g1 = g_create(g0, surface_density)
-        g2 = g_create(g1, polarization)
-        g3 = g_create(g2, scan_type)
+        # sample surface density
+        surface_density = "$sd mNm⁻¹"
         
-        if scan_type == "delay_scan"
-            g4 = g_create(g3, pump_resonance)
-            g5 = g_create(g4, date)
+        # polarization combination
+        if pol == "ppp"
+            polarization = "ppp"
+            elseif pol == "ssp"
+            polarization = "ssp"
+            else 
+            error("""Polarization (pol) has to be "ssp" or "ppp".""")
+        end
+        
+        # scan type (delay or wavenumber scan)
+        if st == "DL r-" || st == "dl r-"
+            scan_type = "delay_scan"
+            pump_resonance= "r⁻pumped"
+        elseif st == "DL d-" || st == "dl d-"
+            scan_type = "delay_scan"
+            pump_resonance = "d⁻pumped"
+        elseif st == "WN" || st == "wn"
+            scan_type = "wavenumber_scan"
+        else 
+            error("""Scan type (st) has to be "delay_scan" or "wavenumber_scan".""")
+        end
+    
+        # generate filename
+        filename = sample *"_"* "$sd"*"mNm" *"_"* "$pol" *"_"* st *"_"* sample_prep *".h5"
+        
+        # calculate pump wavenumber (Ekspla) for delay scan 
+        ekspla_wavelength = get_metadata(raw[1])["ekspla laser"]["ekspla wavelength"][1]
+        ekspla_wavenumber = 10^7 / ekspla_wavelength
+        
+        h5open(filename, "w") do fid
+            g0 = g_create(fid, sample)
+            g1 = g_create(g0, surface_density)
+            g2 = g_create(g1, polarization)
+            g3 = g_create(g2, scan_type)
             
-            g6 = g_create(g5, "Data")
-            g6["sig_matrix"] = sig03
-            g6["ref_matrix"] = ref03
-            g6["pump_wavenumber"] = ekspla_wavenumber
-            g6["wavenumber"] = ν
-            g6["dltime"] = dltime_sorted
-            
-            for i in 1:length(mode_name)
-                g6["sig_mean_$(mode_name[i])"] = sig04[i][:,1]
+            if scan_type == "delay_scan"
+                g4 = g_create(g3, pump_resonance)
+                g5 = g_create(g4, date)
+                
+                g6 = g_create(g5, "Data")
+                g6["sig_matrix"] = sig03
+                g6["ref_matrix"] = ref03
+                g6["pump_wavenumber"] = ekspla_wavenumber
+                g6["wavenumber"] = ν
+                g6["dltime"] = dltime_sorted
+                
+                for i in 1:length(mode_name)
+                    g6["sig_mean_$(mode_name[i])"] = sig04[i][:,1]
+                end
+                
+                for i in 1:length(mode_name)
+                    g6["ref_mean_$(mode_name[i])"] = ref04[i][:,1]
+                end
+                
+                g6["comment"] = "Less Vis Power"
+                g6["folder_name"] = directory
+                
+            else scan_type == "wavenumber_scan"
+                g4 = g_create(g3, date)
+                
+                g5 = g_create(g4, "Data")
+                g5["sig_matrix"] = sig03
+                g5["ref_matrix"] = ref03
+                g5["pump_wavenumber"] = ekspla_WN # Ekspla pump wavenumber for wavenumber scan
+                g5["wavenumber"] = ν
+                g5["dltime"] = dltime_sorted
+                
+                for i in 1:length(mode_name)
+                    g5["sig_mean_$(mode_name[i])"] = sig04[i][:,1]
+                end
+                
+                for i in 1:length(mode_name)
+                    g5["ref_mean_$(mode_name[i])"] = ref04[i][:,1]
+                end
+                
+                g5["comment"] = "Less Vis Power"
+                g5["folder_name"] = directory    
             end
-            
-            for i in 1:length(mode_name)
-                g6["ref_mean_$(mode_name[i])"] = ref04[i][:,1]
-            end
-            
-            g6["comment"] = "Less Vis Power"
-            g6["folder_name"] = directory
-            
-        else scan_type == "wavenumber_scan"
-            g4 = g_create(g3, date)
-            
-            g5 = g_create(g4, "Data")
-            g5["sig_matrix"] = sig03
-            g5["ref_matrix"] = ref03
-            g5["pump_wavenumber"] = ekspla_WN # Ekspla pump wavenumber for wavenumber scan
-            g5["wavenumber"] = ν
-            g5["dltime"] = dltime_sorted
-            
-            for i in 1:length(mode_name)
-                g5["sig_mean_$(mode_name[i])"] = sig04[i][:,1]
-            end
-            
-            for i in 1:length(mode_name)
-                g5["ref_mean_$(mode_name[i])"] = ref04[i][:,1]
-            end
-            
-            g5["comment"] = "Less Vis Power"
-            g5["folder_name"] = directory    
         end
     end
-end
