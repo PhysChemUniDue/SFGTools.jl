@@ -449,7 +449,7 @@ end
                     g6["ref_mean_$(mode_name[i])"] = ref04[i][:,1]
                 end
                 
-                g6["comment"] = "Less Vis Power"
+                g6["comment"] = ""
                 g6["folder_name"] = directory
                 
             else scan_type == "wavenumber_scan"
@@ -470,7 +470,7 @@ end
                     g5["ref_mean_$(mode_name[i])"] = ref04[i][:,1]
                 end
                 
-                g5["comment"] = "Less Vis Power"
+                g5["comment"] = ""
                 g5["folder_name"] = directory    
             end
         end
