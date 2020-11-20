@@ -397,7 +397,7 @@ Register a new Sample name or choose a sample name from the SFGDashboard Sample 
     sample = "CaAra" 
     sample_prep = "20200504"
     date = "20200508"
-    directory = "$date" * "/" * "CaAra_20200504_1_DL-Scan_r--pumped_ppp"
+    directory = "date" * "/" * "CaAra_20200504_1_DL-Scan_r--pumped_ppp"
 
     save_data(sample,32,"ppp","DL d-",date)
 -----------------------------------------------------------------------------------------------------–---------------
