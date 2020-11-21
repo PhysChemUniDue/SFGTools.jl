@@ -672,10 +672,18 @@ Example Input:\n
     save_data(sample,32,"ppp","DL d-",date)\n
     save_data(sample::String, surface_density::Int, polarisation_comb::String, scan::String, date::String)
 """
-function save_data(sample::String, surface_density::Int, polarisation_comb::String, scan::String, date::String)
+function save_data(sample::String, surface_density_value::Int, polarisation_comb::String, scan::String, date::String;
+                   sample = sample, sample_prep = sample_prep, date= date, directory=directory,
+                   sig_matrix=sig03, ref_matrix = ref03, pump_wavenumber_delay = ekspla_wavenumber,
+                   pump_wavenumber_wnscan= ekspla_WN,
+                   probe_wavenumber = ν, delay_time = dltime_sorted, mode_name = mode_name,
+                   sig_bleaches = [mean(sig03[:,pixel[i]], dims=2)[:,1] for i in length(mode_name)],
+                   ref_bleaches = [mean(ref03[:,pixel[i]], dims=2)[:,1] for i in length(mode_name)],
+                   first_comment = get_metadata(raw[1])["comment"][1],
+                   second_comment= "" )
 
     # sample surface density
-    surface_density = "$surface_density mNm⁻¹"
+    surface_density = "$surface_density_value mNm⁻¹"
         
     # scan type (delay or wavenumber scan)
     if occursin("dl",lowercase(scan)) == true
@@ -691,7 +699,11 @@ function save_data(sample::String, surface_density::Int, polarisation_comb::Stri
     end
 
     # generate filename
+<<<<<<< Updated upstream
     filename = sample *"_"* "$surface_density"*"mNm" *"_"* "$polarisation_comb" *"_"* scan *"_"* sample_prep *".h5"
+=======
+    filename = sample *"_"* surface_density *"_"* polarisation_comb *"_"*split(scan)[1]*"_"*split(scan)[2] *"_"* sample_prep * ".h5"
+>>>>>>> Stashed changes
     
     # calculate pump wavenumber (Ekspla) for delay scan 
     ekspla_wavelength = get_metadata(raw[1])["ekspla laser"]["ekspla wavelength"][1]
