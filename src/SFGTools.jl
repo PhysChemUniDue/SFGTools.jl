@@ -31,6 +31,7 @@ export  SFSpectrum,
         pixelshift,
         pixelshift!,
         findpixelshift,
-        savejson
+        savejson,
+        save_data
         # save_mat
 end
