@@ -672,7 +672,7 @@ Example Input:\n
     save_data(sample,32,"ppp","DL d-",date)\n
     save_data(sample::String, surface_density::Int, polarisation_comb::String, scan::String, date::String)
 """
-function save_data_test(sample::String, surface_density::Int, polarisation_comb::String, scan::String, date::String)
+function save_data(sample::String, surface_density::Int, polarisation_comb::String, scan::String, date::String)
 
     # sample surface density
     surface_density = "$surface_density mNm⁻¹"
