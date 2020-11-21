@@ -666,13 +666,13 @@ Condition: \n
 Register a new Sample name or choose a sample name from the SFGDashboard Sample Dropdown, e.g. "CaAra" or "CaAra d4".\n
 Example Input:\n
     \tsample = "CaAra" \n
-    \tsample_prep = "20200504"\n
-    \tdate = "20200508"\n
+    \tsample_prep = "20200504"  yyyymmdd\n 
+    \tdate = "20200508" yyyymmdd\n
     \tdirectory = "date" * "/" * "CaAra_20200504_1_DL-Scan_r--pumped_ppp"\n
     save_data(sample,32,"ppp","DL d-",date)\n
     save_data(sample::String, surface_density::Int, polarisation_comb::String, scan::String, date::String)
 """
-function save_data(sample::String, surface_density::Int, polarisation_comb::String, scan::String, date::String)
+function save_data_test(sample::String, surface_density::Int, polarisation_comb::String, scan::String, date::String)
 
     # sample surface density
     surface_density = "$surface_density mNm⁻¹"
@@ -691,7 +691,7 @@ function save_data(sample::String, surface_density::Int, polarisation_comb::Stri
     end
 
     # generate filename
-    filename = sample *"_"* "$surface_density"*"mNm" *"_"* "$polarisation_comb" *"_"* scan *"_"* sample_prep *".h5"
+    filename = sample *"_"* "$surface_density"*"mNm" *"_"* polarisation_comb *"_"*split(scan)[1]*split(scan)[2] *"_"* sample_prep* ".h5"
     
     # calculate pump wavenumber (Ekspla) for delay scan 
     ekspla_wavelength = get_metadata(raw[1])["ekspla laser"]["ekspla wavelength"][1]
