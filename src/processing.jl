@@ -385,23 +385,37 @@ end
 
 using HDF5
 
-""" Save the data in a HDF5 File. \n
-Condition: \n
-\t Use Template provided by Marvin or Nelli.\n
-Register a new Sample name or choose a sample name from the SFGDashboard Sample Dropdown, e.g. "CaAra" or "CaAra d4".\n
-Example Input:\n
-    \tsample = "CaAra" \n
-    \tsample_prep = "20200504"\n
-    \tdate = "20200508"\n
-    \tdirectory = "date" * "/" * "CaAra_20200504_1_DL-Scan_r--pumped_ppp"\n
-    save_data(sample,32,"ppp","DL d-",date)\n
-    save_data(sample::String, surface_density::Int, polarisation_comb::String, scan::String, date::String)
+""" Save the data in a HDF5 File. 
+Condition:
+-----------------------------------------------------------------------------------------------------–---------------
+    Use Template provided by Marvin or Nelli.
+-----------------------------------------------------------------------------------------------------–---------------
+
+Register a new Sample name or choose a sample name from the SFGDashboard Sample Dropdown, e.g. "CaAra" or "CaAra d4".
+-----------------------------------------------------------------------------------------------------–---------------
+    Example Input:
+    sample = "CaAra" 
+    sample_prep = "20200504"
+    date = "20200508"
+    directory = "date" * "/" * "CaAra_20200504_1_DL-Scan_r--pumped_ppp"
+
+    save_data(sample,32,"ppp","DL d-",date)
+-----------------------------------------------------------------------------------------------------–---------------
 """
 function save_data(sample::String, surface_density::Int, polarisation_comb::String, scan::String, date::String)
 
     # sample surface density
     surface_density = "$surface_density mNm⁻¹"
-        
+    
+    # polarization combination
+    if polarisation_comb == "ppp"
+        polarization = "ppp"
+        elseif polarisation_comb == "ssp"
+        polarization = "ssp"
+        else 
+        error("""Polarization (pol) has to be "ssp" or "ppp".""")
+    end
+    
     # scan type (delay or wavenumber scan)
     if occursin("dl",lowercase(scan)) == true
         scan_type = "delay_scan"
@@ -425,7 +439,7 @@ function save_data(sample::String, surface_density::Int, polarisation_comb::Stri
     h5open(filename, "w") do fid
         g0 = g_create(fid, sample)
         g1 = g_create(g0, surface_density)
-        g2 = g_create(g1, polarisation_comb)
+        g2 = g_create(g1, polarization)
         g3 = g_create(g2, scan_type)
         
         if scan_type == "delay_scan"
