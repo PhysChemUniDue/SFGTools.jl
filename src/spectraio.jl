@@ -724,12 +724,11 @@ Example:\n
 """
 function save_data(sample::String, surface_density_value::Int, polarisation_comb::String, scan::String; 
                    pump_wavenumbers = nothing,
-                   sig_bleaches = [mean(sig03[:,pixel[i]], dims=2)[:,1] for i in 1:length(mode_name)],
-                   ref_bleaches = [mean(ref03[:,pixel[i]], dims=2)[:,1] for i in 1:length(mode_name)],
                    add_comment= "",
                    kwargs...
         )
     
+
     
     # Check if date has the right type
     if typeof(date) == String
@@ -793,11 +792,12 @@ function save_data(sample::String, surface_density_value::Int, polarisation_comb
                 g6["dltime"] = dltime_sorted
             
                 for i in 1:length(mode_name)
-                    g6["sig_mean_$(mode_name[i])"] = sig_bleaches[i]
+                    g6["sig_mean_$(mode_name[i])"] = mean(sig03[:,pixel[i]], dims=2)[:,1] for i in 1:length(pixel)
+                    
                 end
 
                 for i in 1:length(mode_name)
-                    g6["ref_mean_$(mode_name[i])"] = ref_bleaches[i]
+                    g6["ref_mean_$(mode_name[i])"] = mean(ref03[:,pixel[i]], dims=2)[:,1] for i in 1:length(pixel)
                 end
 
                 g6["comment"] = get_metadata(raw[1])["comment"][1]*add_comment
@@ -829,11 +829,11 @@ function save_data(sample::String, surface_density_value::Int, polarisation_comb
                 g5["dltime"] = dltime_sorted
                 
                 for i in 1:length(mode_name)
-                    g5["sig_mean_$(mode_name[i])"] = sig_bleaches[i]
+                    g5["sig_mean_$(mode_name[i])"] = mean(sig03[:,pixel[i]], dims=2)[:,1] for i in 1:length(pixel)
                 end
 
                 for i in 1:length(mode_name)
-                    g5["ref_mean_$(mode_name[i])"] = ref_bleaches[i]
+                    g5["ref_mean_$(mode_name[i])"] = mean(ref03[:,pixel[i]], dims=2)[:,1] for i in 1:length(pixel)
                 end
 
                 g5["comment"] = get_metadata(raw[1])["comment"][1]*add_comment
