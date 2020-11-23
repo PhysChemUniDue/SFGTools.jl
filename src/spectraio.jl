@@ -693,7 +693,7 @@ end
 Change the - or + to ⁻ or ⁺
 """
 
-function convert2unicode(scantype::String)
+function convert2unicode(scantype)
     if occursin("-",scantype) 
         return replace(scantype,"-"=> "⁻")
     elseif occursin("+",scantype)
