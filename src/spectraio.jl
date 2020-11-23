@@ -712,14 +712,11 @@ Example:\n
     \tsample_prep = "20200504"\n
     \tfoldername =  "CaAra_20200504_1_DL-Scan_r--pumped_ppp"\n
     save_data(sample,32,"ppp","DL d-")\n
-    save_data(sample::String, surface_density_value::Int, polarisation_comb::String, scan::String; 
-                   date, sample_prep, foldername, raw, 
-                   sig03, ref03, ν, dltime_sorted,
-                   pump_wavenumbers = nothing, mode_name, pixel,
-                   sig_bleaches = [mean(sig03[:,pixel[i]], dims=2)[:,1] for i in 1:length(mode_name)],
-                   ref_bleaches = [mean(ref03[:,pixel[i]], dims=2)[:,1] for i in 1:length(mode_name)],
-                   add_comment= "" 
-        )
+    save_data(sample::String, surface_density_value::Int, polarisation_comb::String, scan::String;\n
+              pump_wavenumbers = nothing,\n
+              add_comment= "",\n
+              kwargs...\n
+)
 
 """
 function save_data(sample::String, surface_density_value::Int, polarisation_comb::String, scan::String; 
