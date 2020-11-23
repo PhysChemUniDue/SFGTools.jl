@@ -761,7 +761,7 @@ function save_data( sample::String, surface_density_value::Int, polarisation_com
     filename = sample *"_"* "$surface_density_value"*"mNm-1"*"_"* polarisation_comb *"_"*split(scan)[1]*"_"*split(scan)[2] *"_"* sample_prep * ".h5"
     
     # calculate pump wavenumber (Ekspla) for delay scan 
-    ekspla_wavelength = get_metadata(raw[1])["ekspla laser"]["ekspla wavelength"][1]
+    ekspla_wavelength = get_metadata(raw_spectra[1])["ekspla laser"]["ekspla wavelength"][1]
     ekspla_wavenumber = round(10^7 / ekspla_wavelength, digits=2)
     
     h5open(filename, "w") do fid
@@ -799,7 +799,7 @@ function save_data( sample::String, surface_density_value::Int, polarisation_com
                     g6["ref_mean_$(mode_name[i])"] = ref_bleaches[i]
                 end
 
-                g6["comment"] = get_metadata(raw[1])["comment"][1]*add_comment
+                g6["comment"] = get_metadata(raw_spectra[1])["comment"][1]*add_comment
                 g6["folder_name"] = directory
             end
     
@@ -807,7 +807,7 @@ function save_data( sample::String, surface_density_value::Int, polarisation_com
         else scan_type == "wavenumber_scan"
 
             if pump_wavenumbers === nothing 
-                pump_wavenumbers = [10^7 ./ get_metadata(raw[i])["ekspla laser"]["ekspla wavelength"][1] for i in 1:length(raw)]
+                pump_wavenumbers = [10^7 ./ get_metadata(raw_spectra[i])["ekspla laser"]["ekspla wavelength"][1] for i in 1:length(raw_spectra)]
             end
 
             if first(size(sigmatrix)) !== first(size(pump_wavenumbers))
@@ -835,7 +835,7 @@ function save_data( sample::String, surface_density_value::Int, polarisation_com
                     g5["ref_mean_$(mode_name[i])"] = ref_bleaches[i]
                 end
 
-                g5["comment"] = get_metadata(raw[1])["comment"][1]*add_comment
+                g5["comment"] = get_metadata(raw_spectra[1])["comment"][1]*add_comment
                 g5["folder_name"] = directory    
             end
         end
