@@ -5,6 +5,7 @@ using Dates
 using DelimitedFiles
 using JSON: json
 import LightXML
+using HDF5
 
 """
     list_spectra(; exact="", inexact="", date::Tuple{Int64,Int64,Int64}, group=false)
@@ -658,44 +659,110 @@ function savejson(path::String, spectra::Array{SFSpectrum{T,1},1}) where T
     end
 
 end
-using HDF5
+
+""" 
+Convert a date (yyyy,mm,dd) of type Tuple{Int64,Int64,Int64} to a yyyymmdd string.
+"""
+function date2dashboard(date::Tuple{Int64,Int64,Int64})
+    if ndigits(date[1]) == 4
+        yyyy = string(date[1])
+    else 
+        error("$string(date[1]) is not a year. Format must be yyyy.")
+    end
+    
+    if ndigits(date[2]) == 2
+        mm = string(date[2])
+    elseif  ndigits(date[2]) == 1
+        mm = "0"*string(date[2])
+    else 
+        error("$string(date[2]) is not a month. Format must be either mm or m.")
+    end
+    
+    if ndigits(date[3]) == 2
+        dd = string(date[3])
+    elseif  ndigits(date[3]) == 1
+        dd = "0"*string(date[3])
+    else 
+        error("$string(date[3]) is not a day. Format must be either dd or d.")
+    end
+    
+    return yyyy*mm*dd
+end
+
+"""
+Change the - or + to ⁻ or ⁺
+"""
+
+function convert2unicode(scantype)
+    if occursin("-",scantype) 
+        return replace(scantype,"-"=> "⁻")
+    elseif occursin("+",scantype)
+        return replace(scantype,"+" => "⁺")
+    else 
+        return scantype
+    end
+end
+        
 
 """ Save the data in a HDF5 File. \n
-Condition: \n
-\t Use Template provided by Marvin or Nelli.\n
-Register a new Sample name or choose a sample name from the SFGDashboard Sample Dropdown, e.g. "CaAra" or "CaAra d4".\n
-Example Input:\n
+
+Register a new Sample name or choose a sample name from the SFGDashboard Sample Dropdown, e.g. "CaAra" or "CaAra d4". If you are not sure visit --> 132.252.80.59:8050/\n
+Example:\n
     \tsample = "CaAra" \n
-    \tsample_prep = "20200504"  yyyymmdd\n 
-    \tdate = "20200508" yyyymmdd\n
-    \tdirectory = "date" * "/" * "CaAra_20200504_1_DL-Scan_r--pumped_ppp"\n
-    save_data(sample,32,"ppp","DL d-",date)\n
-    save_data(sample::String, surface_density::Int, polarisation_comb::String, scan::String, date::String)
+    \tsample_prep = "20200504"\n
+    \tfoldername =  "CaAra_20200504_1_DL-Scan_r--pumped_ppp"\n
+    save_data(sample,32,"ppp","DL d-")\n
+    save_data(  sample::String, surface_density_value::Int, polarisation_comb::String, scan::String;\n
+                date=date, sample_prep= sample_prep, foldername= foldername, raw_spectra = raw,\n
+                sigmatrix = sig03, refmatrix = ref03, probe_wavenumbers = ν, delay_time = dltime_sorted,\n
+                pump_wavenumbers = nosthing, mode_name = mode_name, \n
+                sig_bleaches = [mean(sig03[:,pixel[i]], dims=2)[:,1] for i in 1:length(mode_name)],\n
+                ref_bleaches = [mean(ref03[:,pixel[i]], dims=2)[:,1] for i in 1:length(mode_name)],\n
+                add_comment= "" 
+    )
 """
-function save_data(sample::String, surface_density::Int, polarisation_comb::String, scan::String, date::String)
+function save_data( sample::String, surface_density_value::Int, polarisation_comb::String, scan::String; 
+                    date=Main.date, sample_prep= Main.sample_prep, foldername= Main.foldername, raw_spectra = Main.raw, 
+                    sigmatrix = Main.sig03, refmatrix = Main.ref03, probe_wavenumbers = Main.ν, delay_time = Main.dltime_sorted,
+                    pump_wavenumbers = nothing, mode_name = Main.mode_name, 
+                    sig_bleaches = [mean(Main.sig03[:,Main.pixel[i]], dims=2)[:,1] for i in 1:length(Main.mode_name)],
+                    ref_bleaches = [mean(Main.ref03[:,Main.pixel[i]], dims=2)[:,1] for i in 1:length(Main.mode_name)],
+                    add_comment= "" 
+        )
+    
+    # Check if date has the right type
+    if typeof(date) == String
+        directory = date * "/" * foldername
+        dashboard_date = date
+    elseif  typeof(date) !== String 
+        dashboard_date = date2dashboard(date)
+        directory = dashboard_date * "/" * foldername
+    elseif length(date) !== 8
+        error("$date has not the type  yyyymmdd")
+    end
 
     # sample surface density
-    surface_density = "$surface_density mNm⁻¹"
+    surface_density = "$surface_density_value mNm⁻¹"
         
     # scan type (delay or wavenumber scan)
     if occursin("dl",lowercase(scan)) == true
         scan_type = "delay_scan"
-        pump_resonance= split(scan)[2]*"pumped"
+        pump_resonance= convert2unicode(split(scan)[2])*"pumped"
     elseif occursin("wl",lowercase(scan)) == true || occursin("wn",lowercase(scan)) == true
         scan_type = "wavenumber_scan"
     else 
-        error("""Scan type cannot be $scan !!
-        Example for delay scan with d- pumped scan ="dl d-" 
+        error("""Scan type cannot be $scan !!\n
+        Example for delay scan with d- pumped scan ="dl d-"\n
         Example for wavelength scan scan = "wl".
         """)
     end
 
     # generate filename
-    filename = sample *"_"* "$surface_density"*"mNm" *"_"* polarisation_comb *"_"*split(scan)[1]*split(scan)[2] *"_"* sample_prep* ".h5"
+    filename = sample *"_"* "$surface_density_value"*"mNm-1"*"_"* polarisation_comb *"_"*split(scan)[1]*"_"*split(scan)[2] *"_"* sample_prep * ".h5"
     
     # calculate pump wavenumber (Ekspla) for delay scan 
-    ekspla_wavelength = get_metadata(raw[1])["ekspla laser"]["ekspla wavelength"][1]
-    ekspla_wavenumber = 10^7 / ekspla_wavelength
+    ekspla_wavelength = get_metadata(raw_spectra[1])["ekspla laser"]["ekspla wavelength"][1]
+    ekspla_wavenumber = round(10^7 / ekspla_wavelength, digits=2)
     
     h5open(filename, "w") do fid
         g0 = g_create(fid, sample)
@@ -704,47 +771,73 @@ function save_data(sample::String, surface_density::Int, polarisation_comb::Stri
         g3 = g_create(g2, scan_type)
         
         if scan_type == "delay_scan"
-            g4 = g_create(g3, pump_resonance)
-            g5 = g_create(g4, date)
+
+            if first(size(sigmatrix)) !== first(size(delay_time))
+                error("Dimensions of sigmatrix and delay_time must match!!\nYou got $(first(size(sigmatrix)))-elements in sigmatrix and $(first(size(delay_time)))-elements in delay_time! ")
+            elseif last(size(sigmatrix)) !== first(size(probe_wavenumbers))
+                error("Dimensions of sigmatrix and probe_wavenumbers must match!!\nYou got $(last(size(sigmatrix)))-elements in sigmatrix and $(first(size(probe_wavenumbers)))-elements in probe_wavenumbers!")
+            elseif first(size(sig_bleaches[1])) !== first(size(delay_time))
+                error("Dimensions of sig_bleaches[i] and delay_time must match!!\nYou got $(first(size(sig_bleaches[1])))-elements in sig_bleaches[i] and $(first(size(delay_time)))-elements in delay_time! ")
+            else
+                
+
+                g4 = g_create(g3, pump_resonance)
+                g5 = g_create(g4, dashboard_date)
             
-            g6 = g_create(g5, "Data")
-            g6["sig_matrix"] = sig03
-            g6["ref_matrix"] = ref03
-            g6["pump_wavenumber"] = ekspla_wavenumber
-            g6["wavenumber"] = ν
-            g6["dltime"] = dltime_sorted
+                g6 = g_create(g5, "Data")
+                g6["sig_matrix"] = sigmatrix
+                g6["ref_matrix"] = refmatrix
+                g6["pump_wavenumber"] = ekspla_wavenumber
+                g6["wavenumber"] = probe_wavenumbers
+                g6["dltime"] = delay_time
             
-            for i in 1:length(mode_name)
-                g6["sig_mean_$(mode_name[i])"] = mean(sig03[:,pixel[i]], dims=2)[:,1]
+                for i in 1:length(mode_name)
+                    g6["sig_mean_$(mode_name[i])"] = sig_bleaches[i]
+                end
+
+                for i in 1:length(mode_name)
+                    g6["ref_mean_$(mode_name[i])"] = ref_bleaches[i]
+                end
+
+                g6["comment"] = get_metadata(raw_spectra[1])["comment"][1]*add_comment
+                g6["folder_name"] = directory
             end
-            
-            for i in 1:length(mode_name)
-                g6["ref_mean_$(mode_name[i])"] = mean(ref03[:,pixel[i]], dims=2)[:,1]
-            end
-            
-            g6["comment"] = get_metadata(raw[1])["comment"][1]
-            g6["folder_name"] = directory
+    
             
         else scan_type == "wavenumber_scan"
-            g4 = g_create(g3, date)
-            
-            g5 = g_create(g4, "Data")
-            g5["sig_matrix"] = sig03
-            g5["ref_matrix"] = ref03
-            g5["pump_wavenumber"] = ekspla_WN # Ekspla pump wavenumber for wavenumber scan
-            g5["wavenumber"] = ν
-            g5["dltime"] = dltime_sorted
-            
-            for i in 1:length(mode_name)
-                g5["sig_mean_$(mode_name[i])"] = mean(sig03[:,pixel[i]], dims=2)[:,1]
+
+            if pump_wavenumbers === nothing 
+                pump_wavenumbers = [10^7 ./ get_metadata(raw_spectra[i])["ekspla laser"]["ekspla wavelength"][1] for i in 1:length(raw_spectra)]
             end
-            
-            for i in 1:length(mode_name)
-                g5["ref_mean_$(mode_name[i])"] = mean(ref03[:,pixel[i]], dims=2)[:,1]
+
+            if first(size(sigmatrix)) !== first(size(pump_wavenumbers))
+                error("Dimensions of sigmatrix and pump_wavenumbers must match!!\nYou got $(first(size(sigmatrix)))-elements in sigmatrix and $(first(size(pump_wavenumbers)))-elements in pump_wavenumbers! ")
+            elseif last(size(sigmatrix)) !== first(size(probe_wavenumbers))
+                error("Dimensions of sigmatrix and probe_wavenumbers must match!!\nYou got $(last(size(sigmatrix)))-elements in sigmatrix and $(first(size(probe_wavenumbers)))-elements in probe_wavenumbers!")
+            elseif first(size(sig_bleaches[1])) !== first(size(pump_wavenumbers))
+                error("Dimensions of sig_bleaches[i] and pump_wavenumbers must match!!\nYou got $(first(size(sig_bleaches[1])))-elements in sig_bleaches[i] and $(first(size(pump_wavenumbers)))-elements in pump_wavenumbers! ")
+            else
+
+                g4 = g_create(g3, dashboard_date)
+                
+                g5 = g_create(g4, "Data")
+                g5["sig_matrix"] = sigmatrix
+                g5["ref_matrix"] = refmatrix
+                g5["pump_wavenumber"] = pump_wavenumbers # Ekspla pump wavenumber for wavenumber scan
+                g5["wavenumber"] = probe_wavenumbers
+                g5["dltime"] = delay_time
+                
+                for i in 1:length(mode_name)
+                    g5["sig_mean_$(mode_name[i])"] = sig_bleaches[i]
+                end
+
+                for i in 1:length(mode_name)
+                    g5["ref_mean_$(mode_name[i])"] = ref_bleaches[i]
+                end
+
+                g5["comment"] = get_metadata(raw_spectra[1])["comment"][1]*add_comment
+                g5["folder_name"] = directory    
             end
-            
-            g5["comment"] = get_metadata(raw[1])["comment"][1]
-            g5["folder_name"] = directory    
         end
     end
 end
