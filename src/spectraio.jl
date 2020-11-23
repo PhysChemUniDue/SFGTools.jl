@@ -724,7 +724,8 @@ function save_data(sample::String, surface_density_value::Int, polarisation_comb
                    add_comment= "",
                    kwargs...
         )
-    
+    global date2= date
+    @show date2
 
     
     # Check if date has the right type
