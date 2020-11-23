@@ -712,20 +712,23 @@ Example:\n
     \tsample_prep = "20200504"\n
     \tfoldername =  "CaAra_20200504_1_DL-Scan_r--pumped_ppp"\n
     save_data(sample,32,"ppp","DL d-")\n
-    save_data(sample::String, surface_density_value::Int, polarisation_comb::String, scan::String;\n
-              pump_wavenumbers = nothing,\n
-              add_comment= "",\n
-              kwargs...\n
-)
-
+    save_data(  sample::String, surface_density_value::Int, polarisation_comb::String, scan::String;\n
+                date=date, sample_prep= sample_prep, foldername= foldername, raw_spectra = raw,\n
+                sigmatrix = sig03, refmatrix = ref03, probe_wavenumbers = ν, delay_time = dltime_sorted,\n
+                pump_wavenumbers = nothing, mode_name = mode_name, \n
+                sig_bleaches = [mean(sig03[:,pixel[i]], dims=2)[:,1] for i in 1:length(mode_name)],\n
+                ref_bleaches = [mean(ref03[:,pixel[i]], dims=2)[:,1] for i in 1:length(mode_name)],\n
+                add_comment= "" 
+    )
 """
-function save_data(sample::String, surface_density_value::Int, polarisation_comb::String, scan::String; 
-                   pump_wavenumbers = nothing,
-                   add_comment= "",
-                   kwargs...
+function save_data( sample::String, surface_density_value::Int, polarisation_comb::String, scan::String; 
+                    date=Main.date, sample_prep= Main.sample_prep, foldername= Main.foldername, raw_spectra = Main.raw, 
+                    sigmatrix = Main.sig03, refmatrix = Main.ref03, probe_wavenumbers = Main.ν, delay_time = Main.dltime_sorted,
+                    pump_wavenumbers = nothing, mode_name = Main.mode_name, 
+                    sig_bleaches = [mean(Main.sig03[:,Main.pixel[i]], dims=2)[:,1] for i in 1:length(Main.mode_name)],
+                    ref_bleaches = [mean(Main.ref03[:,Main.pixel[i]], dims=2)[:,1] for i in 1:length(Main.mode_name)],
+                    add_comment= "" 
         )
-    
-
     
     # Check if date has the right type
     if typeof(date) == String
@@ -755,7 +758,7 @@ function save_data(sample::String, surface_density_value::Int, polarisation_comb
     end
 
     # generate filename
-    filename = sample *"_"* surface_density *"_"* polarisation_comb *"_"*split(scan)[1]*"_"*split(scan)[2] *"_"* sample_prep * ".h5"
+    filename = sample *"_"* surface_density_value*"mNm-1"*"_"* polarisation_comb *"_"*split(scan)[1]*"_"*split(scan)[2] *"_"* sample_prep * ".h5"
     
     # calculate pump wavenumber (Ekspla) for delay scan 
     ekspla_wavelength = get_metadata(raw[1])["ekspla laser"]["ekspla wavelength"][1]
@@ -769,12 +772,12 @@ function save_data(sample::String, surface_density_value::Int, polarisation_comb
         
         if scan_type == "delay_scan"
 
-            if first(size(sig03)) !== first(size(dltime_sorted))
-                error("Dimensions of sig03 and dltime_sorted must match!!\nYou got $(first(size(sig03)))-elements in sig03 and $(first(size(dltime_sorted)))-elements in dltime_sorted! ")
-            elseif last(size(sig03)) !== first(size(ν))
-                error("Dimensions of sig03 and ν must match!!\nYou got $(last(size(sig03)))-elements in sig03 and $(first(size(ν)))-elements in ν!")
-            elseif first(size(sig_bleaches[1])) !== first(size(dltime_sorted))
-                error("Dimensions of sig_bleaches[i] and dltime_sorted must match!!\nYou got $(first(size(sig_bleaches[1])))-elements in sig_bleaches[i] and $(first(size(dltime_sorted)))-elements in dltime_sorted! ")
+            if first(size(sigmatrix)) !== first(size(delay_time))
+                error("Dimensions of sigmatrix and delay_time must match!!\nYou got $(first(size(sigmatrix)))-elements in sigmatrix and $(first(size(delay_time)))-elements in delay_time! ")
+            elseif last(size(sigmatrix)) !== first(size(probe_wavenumbers))
+                error("Dimensions of sigmatrix and probe_wavenumbers must match!!\nYou got $(last(size(sigmatrix)))-elements in sigmatrix and $(first(size(probe_wavenumbers)))-elements in probe_wavenumbers!")
+            elseif first(size(sig_bleaches[1])) !== first(size(delay_time))
+                error("Dimensions of sig_bleaches[i] and delay_time must match!!\nYou got $(first(size(sig_bleaches[1])))-elements in sig_bleaches[i] and $(first(size(delay_time)))-elements in delay_time! ")
             else
                 
 
@@ -782,18 +785,18 @@ function save_data(sample::String, surface_density_value::Int, polarisation_comb
                 g5 = g_create(g4, dashboard_date)
             
                 g6 = g_create(g5, "Data")
-                g6["sig_matrix"] = sig03
-                g6["ref_matrix"] = ref03
+                g6["sig_matrix"] = sigmatrix
+                g6["ref_matrix"] = refmatrix
                 g6["pump_wavenumber"] = ekspla_wavenumber
-                g6["wavenumber"] = ν
-                g6["dltime"] = dltime_sorted
+                g6["wavenumber"] = probe_wavenumbers
+                g6["dltime"] = delay_time
             
                 for i in 1:length(mode_name)
-                    g6["sig_mean_$(mode_name[i])"] = mean(sig03[:,pixel[i]], dims=2)[:,1] 
+                    g6["sig_mean_$(mode_name[i])"] = sig_bleaches[i]
                 end
 
                 for i in 1:length(mode_name)
-                    g6["ref_mean_$(mode_name[i])"] = mean(ref03[:,pixel[i]], dims=2)[:,1] 
+                    g6["ref_mean_$(mode_name[i])"] = ref_bleaches[i]
                 end
 
                 g6["comment"] = get_metadata(raw[1])["comment"][1]*add_comment
@@ -807,10 +810,10 @@ function save_data(sample::String, surface_density_value::Int, polarisation_comb
                 pump_wavenumbers = [10^7 ./ get_metadata(raw[i])["ekspla laser"]["ekspla wavelength"][1] for i in 1:length(raw)]
             end
 
-            if first(size(sig03)) !== first(size(pump_wavenumbers))
-                error("Dimensions of sig03 and pump_wavenumbers must match!!\nYou got $(first(size(sig03)))-elements in sig03 and $(first(size(pump_wavenumbers)))-elements in pump_wavenumbers! ")
-            elseif last(size(sig03)) !== first(size(ν))
-                error("Dimensions of sig03 and ν must match!!\nYou got $(last(size(sig03)))-elements in sig03 and $(first(size(ν)))-elements in ν!")
+            if first(size(sigmatrix)) !== first(size(pump_wavenumbers))
+                error("Dimensions of sigmatrix and pump_wavenumbers must match!!\nYou got $(first(size(sigmatrix)))-elements in sigmatrix and $(first(size(pump_wavenumbers)))-elements in pump_wavenumbers! ")
+            elseif last(size(sigmatrix)) !== first(size(probe_wavenumbers))
+                error("Dimensions of sigmatrix and probe_wavenumbers must match!!\nYou got $(last(size(sigmatrix)))-elements in sigmatrix and $(first(size(probe_wavenumbers)))-elements in probe_wavenumbers!")
             elseif first(size(sig_bleaches[1])) !== first(size(pump_wavenumbers))
                 error("Dimensions of sig_bleaches[i] and pump_wavenumbers must match!!\nYou got $(first(size(sig_bleaches[1])))-elements in sig_bleaches[i] and $(first(size(pump_wavenumbers)))-elements in pump_wavenumbers! ")
             else
@@ -818,18 +821,18 @@ function save_data(sample::String, surface_density_value::Int, polarisation_comb
                 g4 = g_create(g3, dashboard_date)
                 
                 g5 = g_create(g4, "Data")
-                g5["sig_matrix"] = sig03
-                g5["ref_matrix"] = ref03
+                g5["sig_matrix"] = sigmatrix
+                g5["ref_matrix"] = refmatrix
                 g5["pump_wavenumber"] = pump_wavenumbers # Ekspla pump wavenumber for wavenumber scan
-                g5["wavenumber"] = ν
-                g5["dltime"] = dltime_sorted
+                g5["wavenumber"] = probe_wavenumbers
+                g5["dltime"] = delay_time
                 
                 for i in 1:length(mode_name)
-                    g5["sig_mean_$(mode_name[i])"] = mean(sig03[:,pixel[i]], dims=2)[:,1] 
+                    g5["sig_mean_$(mode_name[i])"] = sig_bleaches[i]
                 end
 
                 for i in 1:length(mode_name)
-                    g5["ref_mean_$(mode_name[i])"] = mean(ref03[:,pixel[i]], dims=2)[:,1] 
+                    g5["ref_mean_$(mode_name[i])"] = ref_bleaches[i]
                 end
 
                 g5["comment"] = get_metadata(raw[1])["comment"][1]*add_comment
