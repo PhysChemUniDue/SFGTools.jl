@@ -792,12 +792,11 @@ function save_data(sample::String, surface_density_value::Int, polarisation_comb
                 g6["dltime"] = dltime_sorted
             
                 for i in 1:length(mode_name)
-                    g6["sig_mean_$(mode_name[i])"] = mean(sig03[:,pixel[i]], dims=2)[:,1] for i in 1:length(pixel)
-                    
+                    g6["sig_mean_$(mode_name[i])"] = mean(sig03[:,pixel[i]], dims=2)[:,1] 
                 end
 
                 for i in 1:length(mode_name)
-                    g6["ref_mean_$(mode_name[i])"] = mean(ref03[:,pixel[i]], dims=2)[:,1] for i in 1:length(pixel)
+                    g6["ref_mean_$(mode_name[i])"] = mean(ref03[:,pixel[i]], dims=2)[:,1] 
                 end
 
                 g6["comment"] = get_metadata(raw[1])["comment"][1]*add_comment
@@ -829,11 +828,11 @@ function save_data(sample::String, surface_density_value::Int, polarisation_comb
                 g5["dltime"] = dltime_sorted
                 
                 for i in 1:length(mode_name)
-                    g5["sig_mean_$(mode_name[i])"] = mean(sig03[:,pixel[i]], dims=2)[:,1] for i in 1:length(pixel)
+                    g5["sig_mean_$(mode_name[i])"] = mean(sig03[:,pixel[i]], dims=2)[:,1] 
                 end
 
                 for i in 1:length(mode_name)
-                    g5["ref_mean_$(mode_name[i])"] = mean(ref03[:,pixel[i]], dims=2)[:,1] for i in 1:length(pixel)
+                    g5["ref_mean_$(mode_name[i])"] = mean(ref03[:,pixel[i]], dims=2)[:,1] 
                 end
 
                 g5["comment"] = get_metadata(raw[1])["comment"][1]*add_comment
