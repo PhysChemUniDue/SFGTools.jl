@@ -721,6 +721,8 @@ Example:\n
                 add_comment= "" 
     )
 """
+
+
 function save_data( sample::String, surface_density_value::Int, polarisation_comb::String, scan::String; 
                     date=Main.date, sample_prep= Main.sample_prep, foldername= Main.foldername, raw_spectra = Main.raw, 
                     sigmatrix = Main.sig03, refmatrix = Main.ref03, probe_wavenumbers = Main.ν, delay_time = Main.dltime_sorted,
@@ -729,7 +731,7 @@ function save_data( sample::String, surface_density_value::Int, polarisation_com
                     ref_bleaches = [mean(Main.ref03[:,Main.pixel[i]], dims=2)[:,1] for i in 1:length(Main.mode_name)],
                     add_comment= "" 
         )
-    
+
     # Check if date has the right type
     if typeof(date) == String
         directory = date * "/" * foldername
@@ -758,7 +760,7 @@ function save_data( sample::String, surface_density_value::Int, polarisation_com
     end
 
     # generate filename
-    filename = sample *"_"* "$surface_density_value"*"mNm-1"*"_"* polarisation_comb *"_"*split(scan)[1]*"_"*split(scan)[2] *"_"* sample_prep * ".h5"
+    filename = sample *"_"* "$surface_density_value"*"mNm-1"*"_"* polarisation_comb *"_"*split(scan)[1]*"_"*split(scan)[2] *"_"* sample_prep * dashboard_date*".h5"
     
     # calculate pump wavenumber (Ekspla) for delay scan 
     ekspla_wavelength = get_metadata(raw_spectra[1])["ekspla laser"]["ekspla wavelength"][1]
