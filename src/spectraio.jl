@@ -87,11 +87,11 @@ Returns the number of added spectra and the number of spectra in total.
 
 Optional: specify a single data folder to grab with singledata="path/to/datafolder"
 """
-function grab(dir="./"; getall=false, singledata="")
+function grab(dir="./"; getall=false, singledata= "")
 
 
     #grab single data folder in $singledata?
-    if singledata != ""
+    if singledata !== ""
 
         idexisting = Int64[]
         idlist = Int64[]
@@ -107,7 +107,7 @@ function grab(dir="./"; getall=false, singledata="")
 
                     # search for xml files first
                     format = :xml
-                    mlist = searchdir(joinpath(root, dir), "data.xml")
+                    mlist = searchdir(joinpath(root, dir), ".xml")
 
                     # if still empty throw an error
                     isempty(mlist) && error("No meta files found in $(root)/$(dir)")
@@ -122,7 +122,7 @@ function grab(dir="./"; getall=false, singledata="")
                         push!(dirlist, joinpath(abspath(root), dir))
                         push!(datelist, DateTime(mdict["timestamp"]))
                         if format == :xml
-                            sif_files = searchdir(joinpath(root, dir), "data.sif")
+                            sif_files = searchdir(joinpath(root, dir), ".sif")
                             filestats = stat(joinpath(root, dir, sif_files[1]))
                             specsize = filestats.size
                             push!(sizelist, specsize)
@@ -164,10 +164,10 @@ function grab(dir="./"; getall=false, singledata="")
 
                     # search for xml files first
                     format = :xml
-                    mlist = searchdir(joinpath(root, dir), "data.xml")
+                    mlist = searchdir(joinpath(root, dir), ".xml")
                     # if the list is empty search for txt files
                     if isempty(mlist)
-                        mlist = searchdir(joinpath(root, dir), "data.txt")
+                        mlist = searchdir(joinpath(root, dir), ".txt")
                         format = :txt
                     end
 
@@ -184,7 +184,7 @@ function grab(dir="./"; getall=false, singledata="")
                         push!(dirlist, joinpath(abspath(root), dir))
                         push!(datelist, DateTime(mdict["timestamp"]))
                         if format == :xml
-                            sif_files = searchdir(joinpath(root, dir), "data.sif")
+                            sif_files = searchdir(joinpath(root, dir), ".sif")
                             filestats = stat(joinpath(root, dir, sif_files[1]))
                             specsize = filestats.size
                             push!(sizelist, specsize)
@@ -485,11 +485,11 @@ function get_metadata(path::AbstractString)
         # The path is a folder
         @assert isdir(path)
         # Search for xml files by default
-        mfiles = searchdir(path, "data.xml")
+        mfiles = searchdir(path, ".xml")
         format = :xml
         # If no xml files were found search for txt files
         if length(mfiles) == 0
-            mfiles = searchdir(path, "data.txt")
+            mfiles = searchdir(path, ".txt")
             format = :txt
         end
         paths = Array{String}(undef, size(mfiles, 1))
@@ -550,10 +550,21 @@ function get_metadata(path::AbstractString)
         if length(paths) == 1
             # We deal with a single file which has a .xml extension that we need
             # to get rid of and change it to .sif.
-            sif_files = [splitext(paths[1])[1] * ".sif"]
+            #file  = searchdir(paths, "sif")[1]
+
+            file_dir,filename = splitdir(paths[1])
+
+            sif_files = [joinpath(file_dir, searchdir(file_dir, ".sif")[1])]
+            
+            
+          
+            
         else
             # We deal with a path and perhaps multiple files
-            sif_files = joinpath.(path, searchdir(path, "data.sif"))
+            file_dir,filename = splitdir(paths[1])
+            sif_files = joinpath.(file_dir, searchdir(file_dir, ".sif"))
+            
+            
         end
         if length(sif_files) == 1
             # load the first metadata
@@ -613,6 +624,36 @@ function searchdir(directory::AbstractString, key::AbstractString)
     filter!(x->occursin(key, x), readdir(directory))
 end
 
+function failed_sifs(dir = "./")
+
+    failed_sifs = []
+
+    for (root,dirs,files) in walkdir(dir)
+        for dir in dirs
+            if dir == "raw"
+                filenames= searchdir(joinpath(root, dir),".sif")
+                    for file in filenames
+                        ind_counter = last(findfirst("data",file)) + 1
+                
+                        if typeof(try parse(Int,file[ind_counter]) catch end) == Int64 && try parse(Int,file[ind_counter]) catch end > 0
+                        
+                            push!(failed_sifs,joinpath(root,dir,file))           
+                        end
+                    end
+            end
+         end
+    end
+
+    if length(failed_sifs) > 0
+        
+        return failed_sifs
+
+    elseif length(failed_sifs) == 0
+
+       return "Hurray!! Labview managed to save all .sif files at her first attempt."
+
+    end
+end
 
 """
 `savejson(path::String, spectra::Array{SFSpectrum{T,1},1})`
