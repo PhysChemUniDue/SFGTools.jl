@@ -73,7 +73,7 @@ end
 
 
 """
-    grab(dir="./"; getall=false, singledata="")
+    grab(dir="./"; getall=false, singledata="",delete_dirs=false)
 
 Make a data file that contains information where to find spectra connected to
 an ID. All spectra are internally referenced by this id. `dir` is the main data
@@ -83,12 +83,26 @@ By default this function writes only newly found spectra to the .spectralist fil
 If you want to rewrite the whole file pass `getall=true` as a keyword argument
 to the function.
 
+By default grab checks if there are as many .sif files as .xml files in a directory,
+if there arent this directory is not grabbed. Use the flag delete_dirs=true if you want
+to delete these directorys. Directorys containing the keyword "DARK" wont be removed.
+
 Returns the number of added spectra and the number of spectra in total.
 
 Optional: specify a single data folder to grab with singledata="path/to/datafolder"
 """
-function grab(dir="./"; getall=false, singledata= "")
+function grab(dir="./"; getall=false, singledata= "",delete_dirs=false)
 
+    missing_sifs = []
+
+    if delete_dirs ==false
+
+        push!(missing_sifs,".sif Files are missing in the following directories:")
+
+    elseif delete_dirs == true
+
+        push!(missing_sifs,""".sif Files are missing in the following directories and therefore deleted, except "DARK" dirs.""")
+    end
 
     #grab single data folder in $singledata?
     if singledata !== ""
@@ -104,32 +118,38 @@ function grab(dir="./"; getall=false, singledata= "")
         for (root, dirs, files) in walkdir(singledata)
             for dir in dirs
                 if dir == "raw"
+                    # returns a boolean if there are as many .sif files as .xml files in dir
+                    if check_sif_files(joinpath(root, dir)) == true
+                    
+                        # search for xml files first
+                        format = :xml
+                        mlist = searchdir(joinpath(root, dir), ".xml")
+                        
+                        # if still empty throw an error
+                        isempty(mlist) && error("No meta files found in $(root)/$(dir)")
+                        
+                        mdict = get_metadata(joinpath(root, dir, mlist[1]))
+                        
+                        # Get ID
+                        id = Int64(Dates.value(DateTime(mdict["timestamp"])))
+                        if !any(idexisting .== id)
+                            push!(idlist, id)
+                            push!(namelist, splitdir(splitdir(root)[1])[2])
+                            push!(dirlist, joinpath(abspath(root), dir))
+                            push!(datelist, DateTime(mdict["timestamp"]))
+                            if format == :xml
+                                sif_files = searchdir(joinpath(root, dir), ".sif")
+                                filestats = stat(joinpath(root, dir, sif_files[1]))
+                                specsize = filestats.size
+                                push!(sizelist, specsize)
+                            elseif format == :txt
+                                push!(sizelist, Int64[N_PIXEL/mdict["x_binning"], N_PIXEL/mdict["y_binning"], length(mlist)])
+                            end
 
-                    # search for xml files first
-                    format = :xml
-                    mlist = searchdir(joinpath(root, dir), ".xml")
-
-                    # if still empty throw an error
-                    isempty(mlist) && error("No meta files found in $(root)/$(dir)")
-
-                    mdict = get_metadata(joinpath(root, dir, mlist[1]))
-
-                    # Get ID
-                    id = Int64(Dates.value(DateTime(mdict["timestamp"])))
-                    if !any(idexisting .== id)
-                        push!(idlist, id)
-                        push!(namelist, splitdir(splitdir(root)[1])[2])
-                        push!(dirlist, joinpath(abspath(root), dir))
-                        push!(datelist, DateTime(mdict["timestamp"]))
-                        if format == :xml
-                            sif_files = searchdir(joinpath(root, dir), ".sif")
-                            filestats = stat(joinpath(root, dir, sif_files[1]))
-                            specsize = filestats.size
-                            push!(sizelist, specsize)
-                        elseif format == :txt
-                            push!(sizelist, Int64[N_PIXEL/mdict["x_binning"], N_PIXEL/mdict["y_binning"], length(mlist)])
+                            push!(numlist, parse(Int64, splitdir(splitdir(dirlist[end])[1])[2]))
                         end
-                        push!(numlist, parse(Int64, splitdir(splitdir(dirlist[end])[1])[2]))
+                    elseif check_sif_files(joinpath(root, dir)) == false
+                        push!(missing_sifs,root)
                     end
                 end
             end
@@ -161,37 +181,40 @@ function grab(dir="./"; getall=false, singledata= "")
         for (root, dirs, files) in walkdir(dir)
             for dir in dirs
                 if dir == "raw"
-
-                    # search for xml files first
-                    format = :xml
-                    mlist = searchdir(joinpath(root, dir), ".xml")
-                    # if the list is empty search for txt files
-                    if isempty(mlist)
-                        mlist = searchdir(joinpath(root, dir), ".txt")
-                        format = :txt
-                    end
-
-                    # if still empty throw an error
-                    isempty(mlist) && error("No meta files found in $(root)/$(dir)")
-
-                    mdict = get_metadata(joinpath(root, dir, mlist[1]))
-
-                    # Get ID
-                    id = Int64(Dates.value(DateTime(mdict["timestamp"])))
-                    if !any(idexisting .== id)
-                        push!(idlist, id)
-                        push!(namelist, splitdir(splitdir(root)[1])[2])
-                        push!(dirlist, joinpath(abspath(root), dir))
-                        push!(datelist, DateTime(mdict["timestamp"]))
-                        if format == :xml
-                            sif_files = searchdir(joinpath(root, dir), ".sif")
-                            filestats = stat(joinpath(root, dir, sif_files[1]))
-                            specsize = filestats.size
-                            push!(sizelist, specsize)
-                        elseif format == :txt
-                            push!(sizelist, Int64[N_PIXEL/mdict["x_binning"], N_PIXEL/mdict["y_binning"], length(mlist)])
+                    if check_sif_files(joinpath(root, dir)) == true
+                        # search for xml files first
+                        format = :xml
+                        mlist = searchdir(joinpath(root, dir), ".xml")
+                        # if the list is empty search for txt files
+                        if isempty(mlist)
+                            mlist = searchdir(joinpath(root, dir), ".txt")
+                            format = :txt
                         end
-                        push!(numlist, parse(Int64, splitdir(splitdir(dirlist[end])[1])[2]))
+
+                        # if still empty throw an error
+                        isempty(mlist) && error("No meta files found in $(root)/$(dir)")
+
+                        mdict = get_metadata(joinpath(root, dir, mlist[1]))
+
+                        # Get ID
+                        id = Int64(Dates.value(DateTime(mdict["timestamp"])))
+                        if !any(idexisting .== id)
+                            push!(idlist, id)
+                            push!(namelist, splitdir(splitdir(root)[1])[2])
+                            push!(dirlist, joinpath(abspath(root), dir))
+                            push!(datelist, DateTime(mdict["timestamp"]))
+                            if format == :xml
+                                sif_files = searchdir(joinpath(root, dir), ".sif")
+                                filestats = stat(joinpath(root, dir, sif_files[1]))
+                                specsize = filestats.size
+                                push!(sizelist, specsize)
+                            elseif format == :txt
+                                push!(sizelist, Int64[N_PIXEL/mdict["x_binning"], N_PIXEL/mdict["y_binning"], length(mlist)])
+                            end
+                            push!(numlist, parse(Int64, splitdir(splitdir(dirlist[end])[1])[2]))
+                        end
+                    elseif check_sif_files(joinpath(root, dir)) == false
+                        push!(missing_sifs,root)
                     end
                 end
             end
@@ -211,10 +234,22 @@ function grab(dir="./"; getall=false, singledata= "")
         CSV.write(".spectralist", df; append=true)
     end
 
+    
+
     # println("Collected $(length(idlist)) spectra. ($(length(idexisting) + length(idlist)) overall)")
+    if length(missing_sifs) > 1
+        println.(missing_sifs);
+        if delete_dirs == true
+            function isdark!(dirlist)
+                filter!(x->occursin("DARK",x) == false,dirlist)
+            end
+            isdark!(missing_sifs)
+            rm.(missing_sifs,recursive=true)
+        end
+    end
 
-    length(idlist), length(idexisting) + length(idlist)
 
+    length(idlist), length(idexisting) + length(idlist) 
 
 end
 
@@ -700,6 +735,29 @@ function savejson(path::String, spectra::Array{SFSpectrum{T,1},1}) where T
     end
 
 end
+
+"""
+Check a dir if .sif files are missing. If delete_dirs = true directories with missing .sif Files are removed
+    check_sif_files(dirlist; delete_dirs = false)
+"""
+
+function check_sif_files(dir)
+    xml_files = searchdir(dir,".xml")
+    sif_files = searchdir(dir,".sif")
+
+    if length(xml_files) == length(sif_files)
+        return true
+    else
+        return false
+    end
+end
+
+    #function eq2one(array)
+    #        all(x->x==1,array)
+    #end
+      # compare if each xml file also has a matching sif file 
+        #compare_xml_sif =    occursin.(_xml_files,_sif_files)
+
 
 """ 
 Convert a date (yyyy,mm,dd) of type Tuple{Int64,Int64,Int64} to a yyyymmdd string.
