@@ -817,7 +817,8 @@ Example:\n
                 pump_wavenumbers = nosthing, mode_name = mode_name, \n
                 sig_bleaches = [mean(sig03[:,pixel[i]], dims=2)[:,1] for i in 1:length(mode_name)],\n
                 ref_bleaches = [mean(ref03[:,pixel[i]], dims=2)[:,1] for i in 1:length(mode_name)],\n
-                add_comment= "" 
+                add_comment= "", \n 
+                save_path = "./"
     )
 """
 
@@ -828,7 +829,8 @@ function save_data( sample::String, surface_density_value::Int, polarisation_com
                     pump_wavenumbers = nothing, mode_name = Main.mode_name, 
                     sig_bleaches = [mean(Main.sig03[:,Main.pixel[i]], dims=2)[:,1] for i in 1:length(Main.mode_name)],
                     ref_bleaches = [mean(Main.ref03[:,Main.pixel[i]], dims=2)[:,1] for i in 1:length(Main.mode_name)],
-                    add_comment= "" 
+                    add_comment= "",
+                    save_path = "./" 
         )
 
     # Check if date has the right type
@@ -865,7 +867,7 @@ function save_data( sample::String, surface_density_value::Int, polarisation_com
     ekspla_wavelength = get_metadata(raw_spectra[1])["ekspla laser"]["ekspla wavelength"][1]
     ekspla_wavenumber = round(10^7 / ekspla_wavelength, digits=2)
     
-    h5open(filename, "w") do fid
+    h5open(jointpath(save_path,filename), "w") do fid
         g0 = g_create(fid, sample)
         g1 = g_create(g0, surface_density)
         g2 = g_create(g1, polarisation_comb)
