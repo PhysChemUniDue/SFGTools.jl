@@ -33,6 +33,7 @@ export  SFSpectrum,
         findpixelshift,
         savejson,
         save_data,
-        failed_sifs
+        failed_sifs,
+        check_sif_files
         # save_mat
 end
