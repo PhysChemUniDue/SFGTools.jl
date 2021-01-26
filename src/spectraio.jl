@@ -659,6 +659,9 @@ function searchdir(directory::AbstractString, key::AbstractString)
     filter!(x->occursin(key, x), readdir(directory))
 end
 
+"""
+Return an Array of all .sif failed which Labview failed to save at her first attempt.
+"""
 function failed_sifs(dir = "./")
 
     failed_sifs = []
@@ -740,7 +743,6 @@ end
 Check a dir if .sif files are missing. If delete_dirs = true directories with missing .sif Files are removed
     check_sif_files(dirlist; delete_dirs = false)
 """
-
 function check_sif_files(dir)
     xml_files = searchdir(dir,".xml")
     sif_files = searchdir(dir,".sif")
@@ -821,8 +823,6 @@ Example:\n
                 save_path = "./"
     )
 """
-
-
 function save_data( sample::String, surface_density_value::Int, polarisation_comb::String, scan::String; 
                     date=Main.date, sample_prep= Main.sample_prep, foldername= Main.foldername, raw_spectra = Main.raw, 
                     sigmatrix = Main.sig03, refmatrix = Main.ref03, probe_wavenumbers = Main.ν, delay_time = Main.dltime_sorted,
