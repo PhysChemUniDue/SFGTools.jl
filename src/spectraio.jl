@@ -860,8 +860,12 @@ function save_data( sample::String, surface_density_value::Int, polarisation_com
         """)
     end
 
-    # generate filename
-    filename = sample *"_"* "$surface_density_value"*"mNm-1"*"_"* polarisation_comb *"_"*split(scan)[1]*"_"*split(scan)[2] *"_"* sample_prep * dashboard_date*".h5"
+    if scan_type == "delay_scan"
+        filename = sample *"_"* "$surface_density_value"*"mNm-1"*"_"* polarisation_comb *"_"*split(scan)[1]*"_"*split(scan)[2] *"_"* sample_prep * dashboard_date*".h5"
+    elseif scan_type == "wavenumber_scan"
+        filename = sample *"_"* "$surface_density_value"*"mNm-1"*"_"* polarisation_comb *"_"*split(scan)[1]*"_"* sample_prep * dashboard_date*".h5"
+    end
+
     
     # calculate pump wavenumber (Ekspla) for delay scan 
     ekspla_wavelength = get_metadata(raw_spectra[1])["ekspla laser"]["ekspla wavelength"][1]
@@ -907,7 +911,7 @@ function save_data( sample::String, surface_density_value::Int, polarisation_com
             end
     
             
-        else scan_type == "wavenumber_scan"
+        elseif scan_type == "wavenumber_scan"
 
             if pump_wavenumbers === nothing 
                 pump_wavenumbers = [10^7 ./ get_metadata(raw_spectra[i])["ekspla laser"]["ekspla wavelength"][1] for i in 1:length(raw_spectra)]
