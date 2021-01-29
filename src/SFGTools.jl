@@ -34,6 +34,7 @@ export  SFSpectrum,
         savejson,
         save_data,
         failed_sifs,
-        check_sif_files
+        check_sif_files,
+        get_exposure_time
         # save_mat
 end
