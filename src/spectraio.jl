@@ -5,6 +5,7 @@ using Dates
 using DelimitedFiles
 using JSON: json
 import LightXML
+using HDF5
 
 """
     list_spectra(; exact="", inexact="", date::Tuple{Int64,Int64,Int64}, group=false)
@@ -72,7 +73,7 @@ end
 
 
 """
-    grab(dir="./"; getall=false, singledata="")
+    grab(dir="./"; getall=false, singledata="",delete_dirs=false)
 
 Make a data file that contains information where to find spectra connected to
 an ID. All spectra are internally referenced by this id. `dir` is the main data
@@ -82,15 +83,29 @@ By default this function writes only newly found spectra to the .spectralist fil
 If you want to rewrite the whole file pass `getall=true` as a keyword argument
 to the function.
 
+By default grab checks if there are as many .sif files as .xml files in a directory,
+if there arent this directory is not grabbed. Use the flag delete_dirs=true if you want
+to delete these directorys. Directorys containing the keyword "DARK" wont be removed.
+
 Returns the number of added spectra and the number of spectra in total.
 
 Optional: specify a single data folder to grab with singledata="path/to/datafolder"
 """
-function grab(dir="./"; getall=false, singledata="")
+function grab(dir="./"; getall=false, singledata= "",delete_dirs=false)
 
+    missing_sifs = []
+
+    if delete_dirs ==false
+
+        push!(missing_sifs,".sif Files are missing in the following directories:")
+
+    elseif delete_dirs == true
+
+        push!(missing_sifs,""".sif Files are missing in the following directories and therefore deleted, except "DARK" dirs.""")
+    end
 
     #grab single data folder in $singledata?
-    if singledata != ""
+    if singledata !== ""
 
         idexisting = Int64[]
         idlist = Int64[]
@@ -103,32 +118,38 @@ function grab(dir="./"; getall=false, singledata="")
         for (root, dirs, files) in walkdir(singledata)
             for dir in dirs
                 if dir == "raw"
+                    # returns a boolean if there are as many .sif files as .xml files in dir
+                    if check_sif_files(joinpath(root, dir)) == true
+                    
+                        # search for xml files first
+                        format = :xml
+                        mlist = searchdir(joinpath(root, dir), ".xml")
+                        
+                        # if still empty throw an error
+                        isempty(mlist) && error("No meta files found in $(root)/$(dir)")
+                        
+                        mdict = get_metadata(joinpath(root, dir, mlist[1]))
+                        
+                        # Get ID
+                        id = Int64(Dates.value(DateTime(mdict["timestamp"])))
+                        if !any(idexisting .== id)
+                            push!(idlist, id)
+                            push!(namelist, splitdir(splitdir(root)[1])[2])
+                            push!(dirlist, joinpath(abspath(root), dir))
+                            push!(datelist, DateTime(mdict["timestamp"]))
+                            if format == :xml
+                                sif_files = searchdir(joinpath(root, dir), ".sif")
+                                filestats = stat(joinpath(root, dir, sif_files[1]))
+                                specsize = filestats.size
+                                push!(sizelist, specsize)
+                            elseif format == :txt
+                                push!(sizelist, Int64[N_PIXEL/mdict["x_binning"], N_PIXEL/mdict["y_binning"], length(mlist)])
+                            end
 
-                    # search for xml files first
-                    format = :xml
-                    mlist = searchdir(joinpath(root, dir), "data.xml")
-
-                    # if still empty throw an error
-                    isempty(mlist) && error("No meta files found in $(root)/$(dir)")
-
-                    mdict = get_metadata(joinpath(root, dir, mlist[1]))
-
-                    # Get ID
-                    id = Int64(Dates.value(DateTime(mdict["timestamp"])))
-                    if !any(idexisting .== id)
-                        push!(idlist, id)
-                        push!(namelist, splitdir(splitdir(root)[1])[2])
-                        push!(dirlist, joinpath(abspath(root), dir))
-                        push!(datelist, DateTime(mdict["timestamp"]))
-                        if format == :xml
-                            sif_files = searchdir(joinpath(root, dir), "data.sif")
-                            filestats = stat(joinpath(root, dir, sif_files[1]))
-                            specsize = filestats.size
-                            push!(sizelist, specsize)
-                        elseif format == :txt
-                            push!(sizelist, Int64[N_PIXEL/mdict["x_binning"], N_PIXEL/mdict["y_binning"], length(mlist)])
+                            push!(numlist, parse(Int64, splitdir(splitdir(dirlist[end])[1])[2]))
                         end
-                        push!(numlist, parse(Int64, splitdir(splitdir(dirlist[end])[1])[2]))
+                    elseif check_sif_files(joinpath(root, dir)) == false
+                        push!(missing_sifs,root)
                     end
                 end
             end
@@ -160,37 +181,40 @@ function grab(dir="./"; getall=false, singledata="")
         for (root, dirs, files) in walkdir(dir)
             for dir in dirs
                 if dir == "raw"
-
-                    # search for xml files first
-                    format = :xml
-                    mlist = searchdir(joinpath(root, dir), "data.xml")
-                    # if the list is empty search for txt files
-                    if isempty(mlist)
-                        mlist = searchdir(joinpath(root, dir), "data.txt")
-                        format = :txt
-                    end
-
-                    # if still empty throw an error
-                    isempty(mlist) && error("No meta files found in $(root)/$(dir)")
-
-                    mdict = get_metadata(joinpath(root, dir, mlist[1]))
-
-                    # Get ID
-                    id = Int64(Dates.value(DateTime(mdict["timestamp"])))
-                    if !any(idexisting .== id)
-                        push!(idlist, id)
-                        push!(namelist, splitdir(splitdir(root)[1])[2])
-                        push!(dirlist, joinpath(abspath(root), dir))
-                        push!(datelist, DateTime(mdict["timestamp"]))
-                        if format == :xml
-                            sif_files = searchdir(joinpath(root, dir), "data.sif")
-                            filestats = stat(joinpath(root, dir, sif_files[1]))
-                            specsize = filestats.size
-                            push!(sizelist, specsize)
-                        elseif format == :txt
-                            push!(sizelist, Int64[N_PIXEL/mdict["x_binning"], N_PIXEL/mdict["y_binning"], length(mlist)])
+                    if check_sif_files(joinpath(root, dir)) == true
+                        # search for xml files first
+                        format = :xml
+                        mlist = searchdir(joinpath(root, dir), ".xml")
+                        # if the list is empty search for txt files
+                        if isempty(mlist)
+                            mlist = searchdir(joinpath(root, dir), ".txt")
+                            format = :txt
                         end
-                        push!(numlist, parse(Int64, splitdir(splitdir(dirlist[end])[1])[2]))
+
+                        # if still empty throw an error
+                        isempty(mlist) && error("No meta files found in $(root)/$(dir)")
+
+                        mdict = get_metadata(joinpath(root, dir, mlist[1]))
+
+                        # Get ID
+                        id = Int64(Dates.value(DateTime(mdict["timestamp"])))
+                        if !any(idexisting .== id)
+                            push!(idlist, id)
+                            push!(namelist, splitdir(splitdir(root)[1])[2])
+                            push!(dirlist, joinpath(abspath(root), dir))
+                            push!(datelist, DateTime(mdict["timestamp"]))
+                            if format == :xml
+                                sif_files = searchdir(joinpath(root, dir), ".sif")
+                                filestats = stat(joinpath(root, dir, sif_files[1]))
+                                specsize = filestats.size
+                                push!(sizelist, specsize)
+                            elseif format == :txt
+                                push!(sizelist, Int64[N_PIXEL/mdict["x_binning"], N_PIXEL/mdict["y_binning"], length(mlist)])
+                            end
+                            push!(numlist, parse(Int64, splitdir(splitdir(dirlist[end])[1])[2]))
+                        end
+                    elseif check_sif_files(joinpath(root, dir)) == false
+                        push!(missing_sifs,root)
                     end
                 end
             end
@@ -210,10 +234,22 @@ function grab(dir="./"; getall=false, singledata="")
         CSV.write(".spectralist", df; append=true)
     end
 
+    
+
     # println("Collected $(length(idlist)) spectra. ($(length(idexisting) + length(idlist)) overall)")
+    if length(missing_sifs) > 1
+        println.(missing_sifs);
+        if delete_dirs == true
+            function isdark!(dirlist)
+                filter!(x->occursin("DARK",x) == false,dirlist)
+            end
+            isdark!(missing_sifs)
+            rm.(missing_sifs,recursive=true)
+        end
+    end
 
-    length(idlist), length(idexisting) + length(idlist)
 
+    length(idlist), length(idexisting) + length(idlist) 
 
 end
 
@@ -484,11 +520,11 @@ function get_metadata(path::AbstractString)
         # The path is a folder
         @assert isdir(path)
         # Search for xml files by default
-        mfiles = searchdir(path, "data.xml")
+        mfiles = searchdir(path, ".xml")
         format = :xml
         # If no xml files were found search for txt files
         if length(mfiles) == 0
-            mfiles = searchdir(path, "data.txt")
+            mfiles = searchdir(path, ".txt")
             format = :txt
         end
         paths = Array{String}(undef, size(mfiles, 1))
@@ -549,10 +585,21 @@ function get_metadata(path::AbstractString)
         if length(paths) == 1
             # We deal with a single file which has a .xml extension that we need
             # to get rid of and change it to .sif.
-            sif_files = [splitext(paths[1])[1] * ".sif"]
+            #file  = searchdir(paths, "sif")[1]
+
+            file_dir,filename = splitdir(paths[1])
+
+            sif_files = [joinpath(file_dir, searchdir(file_dir, ".sif")[1])]
+            
+            
+          
+            
         else
             # We deal with a path and perhaps multiple files
-            sif_files = joinpath.(path, searchdir(path, "data.sif"))
+            file_dir,filename = splitdir(paths[1])
+            sif_files = joinpath.(file_dir, searchdir(file_dir, ".sif"))
+            
+            
         end
         if length(sif_files) == 1
             # load the first metadata
@@ -612,6 +659,39 @@ function searchdir(directory::AbstractString, key::AbstractString)
     filter!(x->occursin(key, x), readdir(directory))
 end
 
+"""
+Return an Array of all .sif failed which Labview failed to save at her first attempt.
+"""
+function failed_sifs(dir = "./")
+
+    failed_sifs = []
+
+    for (root,dirs,files) in walkdir(dir)
+        for dir in dirs
+            if dir == "raw"
+                filenames= searchdir(joinpath(root, dir),".sif")
+                    for file in filenames
+                        ind_counter = last(findfirst("data",file)) + 1
+                
+                        if typeof(try parse(Int,file[ind_counter]) catch end) == Int64 && try parse(Int,file[ind_counter]) catch end > 0
+                        
+                            push!(failed_sifs,joinpath(root,dir,file))           
+                        end
+                    end
+            end
+         end
+    end
+
+    if length(failed_sifs) > 0
+        
+        return failed_sifs
+
+    elseif length(failed_sifs) == 0
+
+       return "Hurray!! Labview managed to save all .sif files at her first attempt."
+
+    end
+end
 
 """
 `savejson(path::String, spectra::Array{SFSpectrum{T,1},1})`
@@ -659,6 +739,215 @@ function savejson(path::String, spectra::Array{SFSpectrum{T,1},1}) where T
 
 end
 
+"""
+Check a dir if .sif files are missing. If delete_dirs = true directories with missing .sif Files are removed
+    check_sif_files(dirlist; delete_dirs = false)
+"""
+function check_sif_files(dir)
+    xml_files = searchdir(dir,".xml")
+    sif_files = searchdir(dir,".sif")
+
+    if length(xml_files) == length(sif_files)
+        return true
+    else
+        return false
+    end
+end
+
+    #function eq2one(array)
+    #        all(x->x==1,array)
+    #end
+      # compare if each xml file also has a matching sif file 
+        #compare_xml_sif =    occursin.(_xml_files,_sif_files)
+
+
+""" 
+Convert a date (yyyy,mm,dd) of type Tuple{Int64,Int64,Int64} to a yyyymmdd string.
+"""
+function date2dashboard(date::Tuple{Int64,Int64,Int64})
+    if ndigits(date[1]) == 4
+        yyyy = string(date[1])
+    else 
+        error("$string(date[1]) is not a year. Format must be yyyy.")
+    end
+    
+    if ndigits(date[2]) == 2
+        mm = string(date[2])
+    elseif  ndigits(date[2]) == 1
+        mm = "0"*string(date[2])
+    else 
+        error("$string(date[2]) is not a month. Format must be either mm or m.")
+    end
+    
+    if ndigits(date[3]) == 2
+        dd = string(date[3])
+    elseif  ndigits(date[3]) == 1
+        dd = "0"*string(date[3])
+    else 
+        error("$string(date[3]) is not a day. Format must be either dd or d.")
+    end
+    
+    return yyyy*mm*dd
+end
+
+"""
+Change the - or + to ⁻ or ⁺
+"""
+
+function convert2unicode(scantype)
+    if occursin("-",scantype) 
+        return replace(scantype,"-"=> "⁻")
+    elseif occursin("+",scantype)
+        return replace(scantype,"+" => "⁺")
+    else 
+        return scantype
+    end
+end
+        
+
+""" Save the data in a HDF5 File. \n
+
+Register a new Sample name or choose a sample name from the SFGDashboard Sample Dropdown, e.g. "CaAra" or "CaAra d4". If you are not sure visit --> 132.252.80.59:8050/\n
+Example:\n
+    \tsample = "CaAra" \n
+    \tsample_prep = "20200504"\n
+    \tfoldername =  "CaAra_20200504_1_DL-Scan_r--pumped_ppp"\n
+    save_data(sample,32,"ppp","DL d-")\n
+    save_data(  sample::String, surface_density_value::Int, polarisation_comb::String, scan::String;\n
+                date=date, sample_prep= sample_prep, foldername= foldername, raw_spectra = raw,\n
+                sigmatrix = sig03, refmatrix = ref03, probe_wavenumbers = ν, delay_time = dltime_sorted,\n
+                pump_wavenumbers = nosthing, mode_name = mode_name, \n
+                sig_bleaches = [mean(sig03[:,pixel[i]], dims=2)[:,1] for i in 1:length(mode_name)],\n
+                ref_bleaches = [mean(ref03[:,pixel[i]], dims=2)[:,1] for i in 1:length(mode_name)],\n
+                add_comment= "", \n 
+                save_path = "./"
+    )
+"""
+function save_data( sample::String, surface_density_value::Int, polarisation_comb::String, scan::String; 
+                    date=Main.date, sample_prep= Main.sample_prep, foldername= Main.foldername, raw_spectra = Main.raw, 
+                    sigmatrix = Main.sig03, refmatrix = Main.ref03, probe_wavenumbers = Main.ν, delay_time = Main.dltime_sorted,
+                    pump_wavenumbers = nothing, mode_name = Main.mode_name, 
+                    sig_bleaches = [mean(Main.sig03[:,Main.pixel[i]], dims=2)[:,1] for i in 1:length(Main.mode_name)],
+                    ref_bleaches = [mean(Main.ref03[:,Main.pixel[i]], dims=2)[:,1] for i in 1:length(Main.mode_name)],
+                    add_comment= "",
+                    save_path = "./" 
+        )
+
+    # Check if date has the right type
+    if typeof(date) == String
+        directory = date * "/" * foldername
+        dashboard_date = date
+    elseif  typeof(date) !== String 
+        dashboard_date = date2dashboard(date)
+        directory = dashboard_date * "/" * foldername
+    elseif length(date) !== 8
+        error("$date has not the type  yyyymmdd")
+    end
+
+    # sample surface density
+    surface_density = "$surface_density_value mNm⁻¹"
+        
+    # scan type (delay or wavenumber scan)
+    if occursin("dl",lowercase(scan)) == true
+        scan_type = "delay_scan"
+        pump_resonance= convert2unicode(split(scan)[2])*"pumped"
+    elseif occursin("wl",lowercase(scan)) == true || occursin("wn",lowercase(scan)) == true
+        scan_type = "wavenumber_scan"
+    else 
+        error("""Scan type cannot be $scan !!\n
+        Example for delay scan with d- pumped scan ="dl d-"\n
+        Example for wavelength scan scan = "wl".
+        """)
+    end
+
+    if scan_type == "delay_scan"
+        filename = sample *"_"* "$surface_density_value"*"mNm-1"*"_"* polarisation_comb *"_"*split(scan)[1]*"_"*split(scan)[2] *"_"* sample_prep * dashboard_date*".h5"
+    elseif scan_type == "wavenumber_scan"
+        filename = sample *"_"* "$surface_density_value"*"mNm-1"*"_"* polarisation_comb *"_"*split(scan)[1]*"_"* sample_prep * dashboard_date*".h5"
+    end
+
+    
+    # calculate pump wavenumber (Ekspla) for delay scan 
+    ekspla_wavelength = get_metadata(raw_spectra[1])["ekspla laser"]["ekspla wavelength"][1]
+    ekspla_wavenumber = round(10^7 / ekspla_wavelength, digits=2)
+    
+    h5open(joinpath(save_path,filename), "w") do fid
+        g0 = g_create(fid, sample)
+        g1 = g_create(g0, surface_density)
+        g2 = g_create(g1, polarisation_comb)
+        g3 = g_create(g2, scan_type)
+        
+        if scan_type == "delay_scan"
+
+            if first(size(sigmatrix)) !== first(size(delay_time))
+                error("Dimensions of sigmatrix and delay_time must match!!\nYou got $(first(size(sigmatrix)))-elements in sigmatrix and $(first(size(delay_time)))-elements in delay_time! ")
+            elseif last(size(sigmatrix)) !== first(size(probe_wavenumbers))
+                error("Dimensions of sigmatrix and probe_wavenumbers must match!!\nYou got $(last(size(sigmatrix)))-elements in sigmatrix and $(first(size(probe_wavenumbers)))-elements in probe_wavenumbers!")
+            elseif first(size(sig_bleaches[1])) !== first(size(delay_time))
+                error("Dimensions of sig_bleaches[i] and delay_time must match!!\nYou got $(first(size(sig_bleaches[1])))-elements in sig_bleaches[i] and $(first(size(delay_time)))-elements in delay_time! ")
+            else
+                
+
+                g4 = g_create(g3, pump_resonance)
+                g5 = g_create(g4, dashboard_date)
+            
+                g6 = g_create(g5, "Data")
+                g6["sig_matrix"] = sigmatrix
+                g6["ref_matrix"] = refmatrix
+                g6["pump_wavenumber"] = ekspla_wavenumber
+                g6["wavenumber"] = probe_wavenumbers
+                g6["dltime"] = delay_time
+            
+                for i in 1:length(mode_name)
+                    g6["sig_mean_$(mode_name[i])"] = sig_bleaches[i]
+                end
+
+                for i in 1:length(mode_name)
+                    g6["ref_mean_$(mode_name[i])"] = ref_bleaches[i]
+                end
+
+                g6["comment"] = get_metadata(raw_spectra[1])["comment"][1]*add_comment
+                g6["folder_name"] = directory
+            end
+    
+            
+        elseif scan_type == "wavenumber_scan"
+
+            if pump_wavenumbers === nothing 
+                pump_wavenumbers = [10^7 ./ get_metadata(raw_spectra[i])["ekspla laser"]["ekspla wavelength"][1] for i in 1:length(raw_spectra)]
+            end
+
+            if first(size(sigmatrix)) !== first(size(pump_wavenumbers))
+                error("Dimensions of sigmatrix and pump_wavenumbers must match!!\nYou got $(first(size(sigmatrix)))-elements in sigmatrix and $(first(size(pump_wavenumbers)))-elements in pump_wavenumbers! ")
+            elseif last(size(sigmatrix)) !== first(size(probe_wavenumbers))
+                error("Dimensions of sigmatrix and probe_wavenumbers must match!!\nYou got $(last(size(sigmatrix)))-elements in sigmatrix and $(first(size(probe_wavenumbers)))-elements in probe_wavenumbers!")
+            elseif first(size(sig_bleaches[1])) !== first(size(pump_wavenumbers))
+                error("Dimensions of sig_bleaches[i] and pump_wavenumbers must match!!\nYou got $(first(size(sig_bleaches[1])))-elements in sig_bleaches[i] and $(first(size(pump_wavenumbers)))-elements in pump_wavenumbers! ")
+            else
+
+                g4 = g_create(g3, dashboard_date)
+                
+                g5 = g_create(g4, "Data")
+                g5["sig_matrix"] = sigmatrix
+                g5["ref_matrix"] = refmatrix
+                g5["pump_wavenumber"] = pump_wavenumbers # Ekspla pump wavenumber for wavenumber scan
+                g5["wavenumber"] = probe_wavenumbers
+                g5["dltime"] = delay_time
+                
+                for i in 1:length(mode_name)
+                    g5["sig_mean_$(mode_name[i])"] = sig_bleaches[i]
+                end
+
+                for i in 1:length(mode_name)
+                    g5["ref_mean_$(mode_name[i])"] = ref_bleaches[i]
+                end
+
+                g5["comment"] = get_metadata(raw_spectra[1])["comment"][1]*add_comment
+                g5["folder_name"] = directory    
+            end
+        end
+    end
+end
 
 """
 Save Spectra in a Matlab file.
