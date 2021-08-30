@@ -7,6 +7,7 @@ using DataFrames
 include("sfspectrum.jl")
 include("spectraio.jl")
 include("processing.jl")
+include("./scinote.jl")
 
 const N_PIXEL = 512
 const VIS_WAVELENGTH = 512.4  # According to service protocol of May 2018
@@ -34,6 +35,7 @@ export  SFSpectrum,
         savejson,
         save_data,
         failed_sifs,
-        check_sif_files
+        check_sif_files,
+        post_plot
         # save_mat
 end
