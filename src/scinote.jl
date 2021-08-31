@@ -216,6 +216,7 @@ function post_plot(plot,experiment::AbstractString; name = experiment::AbstractS
         step_id = get_steps(token_tim,team_id,project_id_femto_lab,experiment_id_SEC,task_id,protocol_id)[experiment]
         
         gr()
+        plot
         savefig(plot,"./tmp.png")
         file_data = open("./tmp.png") do io
             Base64.base64encode(io)
