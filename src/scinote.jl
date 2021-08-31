@@ -1,5 +1,4 @@
-using HTTP,JSON,Base64,Sockets
-import Plots.savefig
+using HTTP,JSON,Base64,Sockets,Plots
 
 const SCINOTE_URL = "http://titus.phchem.uni-due.de:3000"
 const client_id = "7vJ_9ypiSlFDLyWYoF_TGpceceDPxXFDnF01Wp3HPMo"
@@ -215,13 +214,14 @@ function post_plot(plot,experiment::AbstractString; name = experiment::AbstractS
         task_id = get_tasks(token_tim,team_id,project_id_femto_lab,experiment_id_SEC)[task_name]
         protocol_id = get_protocols(token_tim,team_id,project_id_femto_lab,experiment_id_SEC,task_id)[1]
         step_id = get_steps(token_tim,team_id,project_id_femto_lab,experiment_id_SEC,task_id,protocol_id)[experiment]
-
+        
+        gr()
         savefig(plot,"./tmp.png")
         file_data = open("./tmp.png") do io
-            base64encode(io)
+            Base64.base64encode(io)
         end
         rm("./tmp.png",force=true)
-
+        
         attachment = 
             Dict(
                 "data"=> Dict(
@@ -239,6 +239,7 @@ function post_plot(plot,experiment::AbstractString; name = experiment::AbstractS
         )
         body = String(resp.body)
         data=JSON.parse(body)["data"]
+        plotly()
         url = data["attributes"]["file_url"]
    end
 end
