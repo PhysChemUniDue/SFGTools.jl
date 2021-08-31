@@ -214,9 +214,7 @@ function post_plot(plot,experiment::AbstractString; name = experiment::AbstractS
         task_id = get_tasks(token_tim,team_id,project_id_femto_lab,experiment_id_SEC)[task_name]
         protocol_id = get_protocols(token_tim,team_id,project_id_femto_lab,experiment_id_SEC,task_id)[1]
         step_id = get_steps(token_tim,team_id,project_id_femto_lab,experiment_id_SEC,task_id,protocol_id)[experiment]
-        
-        Main.gr()
-        plot
+          
         savefig(plot,"./tmp.png")
         file_data = open("./tmp.png") do io
             Base64.base64encode(io)
@@ -240,7 +238,6 @@ function post_plot(plot,experiment::AbstractString; name = experiment::AbstractS
         )
         body = String(resp.body)
         data=JSON.parse(body)["data"]
-        Main.plotly()
         url = data["attributes"]["file_url"]
    end
 end
