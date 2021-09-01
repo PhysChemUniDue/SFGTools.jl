@@ -3,7 +3,15 @@ const r_ppp = r"ppp"
 const r_sps = r"sps"
 const r_pss = r"pss"
 
+"""
+Fetch the polarisation combination of a SFSpectrum or a direclty of a comment.\n 
+\t get_pol_comb(comment::AbstractString)\n
+\t get_pol_comb(s::SFSpectrum)\n
 
+
+julia> get_pol_comb(raw[1])
+\t "ssp"
+"""
 function get_pol_comb(comment::AbstractString)
 
     m_ssp = match(r_ssp,comment)
