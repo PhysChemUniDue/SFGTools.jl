@@ -27,7 +27,8 @@ function get_pol_comb(comment::AbstractString)
        for match in matches
            if match !== nothing
                n += 1
-               push!(pol_comb,match.match)
+               string = "$(match.match[1:3])"
+               push!(pol_comb,string)
            end
        end
            if n==1
