@@ -255,6 +255,7 @@ function post_step(experiment::AbstractString,task::AbstractString,step::Abstrac
             header(token_tim),
             JSON.json(new_step)
         )
+        sleep(1)
     body = String(resp.body)
     data=JSON.parse(body)["data"]["attributes"] |> values |> collect 
     println("The step $(data[1]) was succesfully created.")
@@ -313,6 +314,7 @@ function post_plot(plot,experiment::AbstractString,task::AbstractString,step::Ab
             header(token_tim),
             JSON.json(attachment)
         )
+        sleep(1)
         body = String(resp.body)
         data=JSON.parse(body)["data"]
         url = data["attributes"]["file_url"]
