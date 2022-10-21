@@ -43,10 +43,18 @@ function get_pol_comb(comment::AbstractString)
            end
 end
 
+function get_comment(s::SFSpectrum)
+    comment = get_metadata(s)["comment"]
+
+    if typeof(comment) <: Vector
+        comment = comment[1]
+    end
+    return comment
+end
 
 function get_pol_comb(s::SFSpectrum)
 
-    comment = get_metadata(s)["comment"][1]
+    comment = get_comment(s)
 
     get_pol_comb(comment)  
 end

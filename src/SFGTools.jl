@@ -11,7 +11,7 @@ include("./scinote.jl")
 include("get_polarisationcomb.jl")
 
 const N_PIXEL = 512
-const VIS_WAVELENGTH = 512.4  # According to service protocol of May 2018
+const VIS_WAVELENGTH = 513.3  # After Ethalon - October 2022
 
 export  SFSpectrum,
         average,
@@ -37,7 +37,11 @@ export  SFSpectrum,
         save_data,
         failed_sifs,
         check_sif_files,
-        post_plot,
-        get_pol_comb
+        get_pol_comb,
+        list_experiments,
+        list_tasks,
+        list_steps,
+        post_step,
+        post_plot
         # save_mat
 end
