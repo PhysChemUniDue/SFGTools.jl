@@ -42,6 +42,7 @@ export  SFSpectrum,
         list_tasks,
         list_steps,
         post_step,
-        post_plot
+        post_plot,
+        get_comment
         # save_mat
 end
