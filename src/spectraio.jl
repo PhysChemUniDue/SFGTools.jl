@@ -816,7 +816,7 @@ Example:\n
     save_data(  sample::String, surface_density_value::Int, polarisation_comb::String, scan::String;\n
                 date=date, sample_prep= sample_prep, foldername= foldername, raw_spectra = raw,\n
                 sigmatrix = sig03, refmatrix = ref03, probe_wavenumbers = ν, delay_time = dltime_sorted,\n
-                pump_wavenumbers = nosthing, mode_name = mode_name, \n
+                pump_wavenumbers = nothing, mode_name = mode_name, \n
                 sig_bleaches = [mean(sig03[:,pixel[i]], dims=2)[:,1] for i in 1:length(mode_name)],\n
                 ref_bleaches = [mean(ref03[:,pixel[i]], dims=2)[:,1] for i in 1:length(mode_name)],\n
                 add_comment= "", \n 

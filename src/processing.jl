@@ -202,6 +202,17 @@ end
 
 
 """
+    get_exposure_time(s)
+    
+    Returns exposure time for the spectrum s.
+
+"""
+function get_exposure_time(s::SFSpectrum{T,N}) where {T,N}
+    get_attribute(s, "ccd_exposure_time")[1]
+end
+
+
+"""
     average(s)
 
 Combine all spectra of a series in `s` to a single one. Returns the mean counts

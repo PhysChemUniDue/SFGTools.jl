@@ -11,7 +11,7 @@ include("./scinote.jl")
 include("get_polarisationcomb.jl")
 
 const N_PIXEL = 512
-const VIS_WAVELENGTH = 512.4  # According to service protocol of May 2018
+const VIS_WAVELENGTH = 513.4  # According to service protocol of May 2018
 
 export  SFSpectrum,
         average,
