@@ -3,7 +3,7 @@
 ## Installation
 From the REPL do
 ```julia
-julia> ]https://github.com/lambcount/AndorSIF.jl#sftools`
+julia> ]add https://github.com/lambcount/AndorSIF.jl#sftools
 julia> ]add https://github.com/PhysChemUniDue/SFGTools.jl#master
 ```
 
