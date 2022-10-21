@@ -274,7 +274,7 @@ If succesfull the function returns the link to the posted attachment \n
 e.g. post_plot(plot,"Alkanethiols","HDT_01","001", name = "Awesome Plot" )
 
 """
-function post_plot(plot,experiment::AbstractString,task::AbstractString,step::AbstractString; name = experiment::AbstractString)
+function post_plot(plot,experiment::AbstractString,task::AbstractString,step::AbstractString; name = step::AbstractString)
 
     if api_running() == true
         token_tim = token()["access_token"] 
@@ -289,7 +289,7 @@ function post_plot(plot,experiment::AbstractString,task::AbstractString,step::Ab
         protocol_id = get_protocols(team_id,project_id_femto_lab,experiment_id,task_id)[1]
         step_id = try get_steps(team_id,project_id_femto_lab,experiment_id,task_id,protocol_id)[step] catch end
         if step_id === nothing
-            error("$(step) was not found. Try list_steps(experiment) to see all available steps in given experiment and task on Titus.")
+            error("$(step) was not found. Try list_steps(experiment,task) to see all available steps in given experiment and task on Titus.")
         end
           
         savefig(plot,"./tmp.png")

@@ -1,11 +1,9 @@
 # SFGTools Overview
 
-** Outdated **
-
 ## Installation
 From the REPL do
 ```julia
-julia> ]add https://github.com/MLackner/AndorSIF.jl#v1.0fixes
+julia> ]https://github.com/lambcount/AndorSIF.jl#sftools`
 julia> ]add https://github.com/PhysChemUniDue/SFGTools.jl#master
 ```
 
