@@ -285,16 +285,16 @@ function post_plot(plot,experiment::AbstractString,task::AbstractString,step::Ab
 
     if api_running() == true
         token_tim = token()["access_token"] 
-        experiment_id  = try get_experiments(team_id,project_id_femto_lab)[experiment] catch end
+        experiment_id  = try get_experiments(token_tim,team_id,project_id_femto_lab)[experiment] catch end
         if experiment_id === nothing
             error("$(experiment) was not found. Try list_experiments() to see all available experiments on Titus.")
         end
-        task_id = try get_tasks(team_id,project_id_femto_lab,experiment_id)[task] catch end
+        task_id = try get_tasks(token_tim,team_id,project_id_femto_lab,experiment_id)[task] catch end
         if task_id === nothing
             error("$(task) was not found. Try list_tasks(experiment) to see all available tasks in given experiment on Titus.")
         end
-        protocol_id = get_protocols(team_id,project_id_femto_lab,experiment_id,task_id)[1]
-        step_id = try get_steps(team_id,project_id_femto_lab,experiment_id,task_id,protocol_id)[step] catch end
+        protocol_id = get_protocols(token_tim,team_id,project_id_femto_lab,experiment_id,task_id)[1]
+        step_id = try get_steps(token_tim,team_id,project_id_femto_lab,experiment_id,task_id,protocol_id)[step] catch end
         if step_id === nothing
             error("$(step) was not found. Try list_steps(experiment,task) to see all available steps in given experiment and task on Titus.")
         end
