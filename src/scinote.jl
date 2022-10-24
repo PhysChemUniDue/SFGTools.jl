@@ -69,12 +69,12 @@ function token()
         JSON.parse(body)
     end
 end
-token_tim = token()["access_token"]
+
 """
     get_teams()
 This function retrieves all teams and their IDs the user is member of.  
 """
-function get_all_teams()
+function get_all_teams(token_tim)
     r = HTTP.request("GET",SCINOTE_URL*"/api/v1/teams",header(token_tim))
     body = String(r.body)
     _body = JSON.parse(body)
@@ -89,7 +89,7 @@ end
     get_projects(team::Int64)
 This function retrieves all projects and their IDs from the AK Hasselbrink team.
 """
-function get_projects(team)
+function get_projects(token_tim,team)
     resp=HTTP.request("GET",SCINOTE_URL*"/api/v1/teams/$(team)/projects",header(token_tim))
     body = String(resp.body)
     data=JSON.parse(body)["data"]
@@ -101,7 +101,7 @@ end
     get_experiments(project::Int64,team::Int64)
 This function retrieves all experiments and their IDs from the specified project
 """
-function get_experiments(team,project) 
+function get_experiments(token_tim,team,project) 
     resp=HTTP.request("GET",SCINOTE_URL*"/api/v1/teams/$(team)/projects/$(project)/experiments",header(token_tim))
     body = String(resp.body)
     data=JSON.parse(body)["data"] 
@@ -113,7 +113,7 @@ end
     get_tasks(team::Int64,project::Int64,experiment::Int64)
 This function retrieves all tasks and theis IDs from a specific experiment. 
 """
-function get_tasks(team,project,experiment;show_archived= false)
+function get_tasks(token_tim,team,project,experiment;show_archived= false)
     resp=HTTP.request("GET",SCINOTE_URL*"/api/v1/teams/$(team)/projects/$(project)/experiments/$(experiment)/tasks?page[size]=999",header(token_tim))
     body = String(resp.body)
     data=JSON.parse(body)["data"]
@@ -130,7 +130,7 @@ end
     get_protocols(team::Int64,project::Int64,experiment::Int64,task::Int64)
 This function retrieves all protocols and their IDs from a specific experiment. 
 """
-function get_protocols(team,project,experiment,task)
+function get_protocols(token_tim,team,project,experiment,task)
    resp=HTTP.request("GET",SCINOTE_URL*"/api/v1/teams/$(team)/projects/$(project)/experiments/$(experiment)/tasks/$(task)/protocols",header(token_tim))
    body = String(resp.body)
    data=JSON.parse(body)["data"]
@@ -145,7 +145,7 @@ end
     get_steps(team::Int64,project::Int64,experiment::Int64,task::Int64,protocol::Int64)
 This function retrieves all steps and their IDs from a specific protocol. 
 """
-function get_steps(team,project,experiment,task,protocol)
+function get_steps(token_tim,team,project,experiment,task,protocol)
 
     resp=HTTP.request("GET",SCINOTE_URL*"/api/v1/teams/$(team)/projects/$(project)/experiments/$(experiment)/tasks/$(task)/protocols/$(protocol)/steps?page[size]=999",header(token_tim))
     body = String(resp.body)
@@ -179,7 +179,9 @@ Lists all experiment in the group Femto Lab.
 function list_experiments()
     if api_running() == true
         token_tim = token()["access_token"]
-        experiments = get_experiments(team_id,project_id_femto_lab) |> keys |> collect
+        experiments = get_experiments(token_tim,team_id,project_id_femto_lab) |> keys |> collect
+        sleep(1)
+        return experiments
     end
 end
 
@@ -192,11 +194,13 @@ e.g. list_steps("Alkanethiols")
 function list_tasks(experiment::AbstractString)
     if api_running() == true
         token_tim = token()["access_token"]
-        experiment_id  = try get_experiments(team_id,project_id_femto_lab)[experiment] catch end
+        experiment_id  = try get_experiments(token_tim,team_id,project_id_femto_lab)[experiment] catch end
         if experiment_id === nothing
             error("$(experiment) was not found. Try list_experiments() to see all available experiments on Titus.")
         end
-        tasks = get_tasks(team_id,project_id_femto_lab,experiment_id) |> keys |> collect |> sort
+        tasks = get_tasks(token_tim,team_id,project_id_femto_lab,experiment_id) |> keys |> collect |> sort
+        sleep(1)
+        return tasks
     end
     
 end
@@ -208,16 +212,18 @@ e.g. list_steps("Alkanethiols","HDT_01")
 function list_steps(experiment::AbstractString,task::AbstractString)
     if api_running() == true
         token_tim = token()["access_token"]
-        experiment_id  = try get_experiments(team_id,project_id_femto_lab)[experiment] catch end
+        experiment_id  = try get_experiments(token_tim,team_id,project_id_femto_lab)[experiment] catch end
         if experiment_id === nothing
             error("$(experiment) was not found. Try list_experiments() to see all available experiments on Titus.")
         end
-        task_id = try get_tasks(team_id,project_id_femto_lab,experiment_id)[task] catch end
+        task_id = try get_tasks(token_tim,team_id,project_id_femto_lab,experiment_id)[task] catch end
         if experiment_id === nothing
             error("$(task) was not found. Try list_tasks(experiment) to see all available tasks in given experiment on Titus.")
         end
-        protocol_id = get_protocols(team_id,project_id_femto_lab,experiment_id,task_id)[1]
-        steps    = get_steps(team_id,project_id_femto_lab,experiment_id,task_id,protocol_id) |> keys |> collect |> sort
+        protocol_id = get_protocols(token_tim,team_id,project_id_femto_lab,experiment_id,task_id)[1]
+        steps    = get_steps(token_tim,team_id,project_id_femto_lab,experiment_id,task_id,protocol_id) |> keys |> collect |> sort
+        sleep(1)
+        return steps
     end
 
 end
@@ -231,15 +237,15 @@ If this doenst work, make sure you specified the right experiment and task. Use 
 function post_step(experiment::AbstractString,task::AbstractString,step::AbstractString,comment::AbstractString)
     if api_running() == true
         token_tim = token()["access_token"]
-        experiment_id  = try get_experiments(team_id,project_id_femto_lab)[experiment] catch end
+        experiment_id  = try get_experiments(token_tim,team_id,project_id_femto_lab)[experiment] catch end
         if experiment_id === nothing
             error("$(experiment) was not found. Try list_experiments() to see all available experiments on Titus.")
         end
-        task_id = try get_tasks(team_id,project_id_femto_lab,experiment_id)[task] catch end
+        task_id = try get_tasks(token_tim,team_id,project_id_femto_lab,experiment_id)[task] catch end
         if task_id === nothing
             error("$(task) was not found. Try list_tasks(experiment) to see all available tasks in given experiment on Titus.")
         end
-        protocol_id = get_protocols(team_id,project_id_femto_lab,experiment_id,task_id)[1]
+        protocol_id = get_protocols(token_tim,team_id,project_id_femto_lab,experiment_id,task_id)[1]
 
         new_step  = Dict(
             "data"=> Dict(
