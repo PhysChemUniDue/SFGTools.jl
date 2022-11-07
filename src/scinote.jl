@@ -1,4 +1,5 @@
-using HTTP,JSON,Base64,Sockets,Plots
+using HTTP,JSON,Base64,Sockets,Plots,DataFrames
+import StringDistances: Levenshtein
 
 const SCINOTE_URL = "http://titus.phchem.uni-due.de:3000"
 const client_id = "7vJ_9ypiSlFDLyWYoF_TGpceceDPxXFDnF01Wp3HPMo"
@@ -71,7 +72,7 @@ function token()
 end
 
 """
-    get_teams()
+    get_teams(token)
 This function retrieves all teams and their IDs the user is member of.  
 """
 function get_all_teams(token_tim)
@@ -86,7 +87,7 @@ end
 
 
 """
-    get_projects(team::Int64)
+    get_projects(token,team::Int64)
 This function retrieves all projects and their IDs from the AK Hasselbrink team.
 """
 function get_projects(token_tim,team)
@@ -98,7 +99,7 @@ function get_projects(token_tim,team)
 end
 
 """
-    get_experiments(project::Int64,team::Int64)
+    get_experiments(token,project::Int64,team::Int64)
 This function retrieves all experiments and their IDs from the specified project
 """
 function get_experiments(token_tim,team,project) 
@@ -110,7 +111,7 @@ function get_experiments(token_tim,team,project)
 end
 
 """
-    get_tasks(team::Int64,project::Int64,experiment::Int64)
+    get_tasks(token,team::Int64,project::Int64,experiment::Int64)
 This function retrieves all tasks and theis IDs from a specific experiment. 
 """
 function get_tasks(token_tim,team,project,experiment;show_archived= false)
@@ -127,7 +128,7 @@ end
 
 
 """
-    get_protocols(team::Int64,project::Int64,experiment::Int64,task::Int64)
+    get_protocols(token,team::Int64,project::Int64,experiment::Int64,task::Int64)
 This function retrieves all protocols and their IDs from a specific experiment. 
 """
 function get_protocols(token_tim,team,project,experiment,task)
@@ -142,7 +143,7 @@ end
 
 
 """
-    get_steps(team::Int64,project::Int64,experiment::Int64,task::Int64,protocol::Int64)
+    get_steps(token,team::Int64,project::Int64,experiment::Int64,task::Int64,protocol::Int64)
 This function retrieves all steps and their IDs from a specific protocol. 
 """
 function get_steps(token_tim,team,project,experiment,task,protocol)
@@ -154,24 +155,150 @@ function get_steps(token_tim,team,project,experiment,task,protocol)
     steps = Dict(data[i]["attributes"]["name"] => data[i]["id"] for i in 1:n_steps)
 end
 
-#"""
-#    get_step_table(team::Int64,project::Int64,experiment::Int64,task::Int64,protocol::Int64,step::Int64)
-#This function retrieves the table from specific step. 
-#Empty cells will be ignored. Be sure to have a proper 
-#"""
-#function get_step_table(team::Int64,project::Int64,experiment::Int64,task::Int64,protocol::Int64,step::Int64)
-#    if api_running() == true
-#        resp=HTTP.request("GET",SCINOTE_URL*"/api/v1/teams/$(team)/projects/$(project)/experiments/$(experiment)/tasks/$(task)/protocols/$(protocol)/steps/$(step)/tables",header(token_tim))
-#        body = String(resp.body)
-#        data=JSON.parse(JSON.parse(body)["data"][1]["attributes"]["contents"])["data"]
-#
-#        param_names = [data[i][1] for i in 1:length(data) if data[i][1] !== nothing]
-#        param_values = [data[i][2] for i in 1:length(data) if data[i][1] !== nothing]
-#        param_units = [data[i][3] for i in 1:length(data) if data[i][1] !== nothing]
-#
-#            return param_names,param_values,param_units
-#    end
-#end
+
+"""
+    get_attachments(token,team::Int64,project::Int64,experiment::Int64,task::Int64,protocol::Int64,step::Int64)
+This function retrieves all attachments and their IDs from a specific step. 
+"""
+function get_attachments(token_tim,team,project,experiment,task,protocol,step)
+
+    resp=HTTP.request("GET",SCINOTE_URL*"/api/v1/teams/$(team)/projects/$(project)/experiments/$(experiment)/tasks/$(task)/protocols/$(protocol)/steps/$(step)/attachments?page[size]=999",header(token_tim))
+    body = String(resp.body)
+    data=JSON.parse(body)["data"]
+    n_attachments= length(data)
+    attachments = Dict(data[i]["attributes"]["file_name"] => data[i]["id"] for i in 1:n_attachments)
+end
+
+
+"""
+get_inventories(token_tim,team)
+
+This function retrieves  all active inventories from the specified team.
+"""
+function get_inventories(token_tim,team)
+
+    resp=HTTP.request("GET",SCINOTE_URL*"/api/v1/teams/$(team)/inventories?page[size]=999",header(token_tim))
+    body = String(resp.body)
+    data=JSON.parse(body)["data"]
+    n_inventories = length(data)
+    inventories = Dict(data[i]["attributes"]["name"] => data[i]["id"] for i in 1:n_inventories)
+end
+
+"""
+get_inventoryitems(token_tim,team,inventory)
+
+This function retrieves all inventory items fromthe specified inventory.
+"""
+function get_inventoryitems(token_tim,team,inventory)
+
+    resp=HTTP.request("GET",SCINOTE_URL*"/api/v1/teams/$(team)/inventories/$(inventory)/items?page[size]=999",header(token_tim))
+    body = String(resp.body)
+    data=JSON.parse(body)["data"]
+    n_items = length(data)
+    items = Dict(data[i]["attributes"]["name"] => data[i]["id"] for i in 1:n_items)
+end
+
+"""
+    get_inventorycolumns(token_tim,team,inventory)
+
+This function retrieves all columns from specified inventory.
+"""
+function get_inventorycolumns(token_tim,team,inventory)
+
+    resp=HTTP.request("GET",SCINOTE_URL*"/api/v1/teams/$(team)/inventories/$(inventory)/columns?page[size]=999",header(token_tim))
+    body = String(resp.body)
+    data=JSON.parse(body)["data"]
+    n_columns = length(data)
+    columns = Dict(data[i]["attributes"]["name"] => data[i]["id"] for i in 1:n_columns)
+end
+
+"""
+    get_itemcolumns(token_tim,team,inventory,item)
+
+This function retrieves cells from specified item in inventory.
+"""
+function get_itemcolumns(token_tim,team,inventory,item)
+
+    resp=HTTP.request("GET",SCINOTE_URL*"/api/v1/teams/$(team)/inventories/$(inventory)/items/$(item)/cells?page[size]=999",header(token_tim))
+    body = String(resp.body)
+    data=JSON.parse(body)["data"]
+    n_columns = length(data)
+    columns = Dict(data[i]["attributes"]["column_id"] => data[i]["attributes"]["value"]["text"] for i in 1:n_columns)
+end
+"""
+    list_inventories()
+Lists all inventories in Team AK Hasselbrink.
+"""
+function list_inventories()
+    if api_running() == true
+        token_tim = token()["access_token"]
+        inventories = get_inventories(token_tim,team_id) |> keys |> collect
+        sleep(1)
+        return inventories
+    end
+end
+
+"""
+    list_items(;inventory = "FemtoLab samples")
+Lists all items in the specified inventory, by default the inventory FemtoLab samples is specified. To see all inventories try the function list_inventories().
+With get_sample(sample) you can retrieve all the stored data about the sample from Titus.
+"""
+function list_items(;inventory = "FemtoLab samples")
+    if api_running() == true
+        token_tim = token()["access_token"]
+        inventories = get_inventories(token_tim,team_id)
+        inventory_id = try inventories[inventory] catch end
+        if inventory_id === nothing
+            k_inventories = inventories |> keys |> collect
+            most_prob_idx = [Levenshtein()(inventory,_inventories) for _inventories in k_inventories] |> argmin
+            most_prob = k_inventories[most_prob_idx]
+            error(""" Inventory "$(inventory)" was not found. Did you mean "$(most_prob)"? Try list_inventories() to see all available inventories on Titus.""")
+        end
+        items = get_inventoryitems(token_tim,team_id,inventory_id) |> keys |> collect |> sort
+        sleep(1)
+        return items
+    end
+end
+
+"""
+    get_sample(sample)
+
+Retrieve all data on the sample from Scinote.
+"""
+function get_sample(sample)
+    if api_running() == true
+        token_tim = token()["access_token"]
+        d_inventories = get_inventories(token_tim,team_id)
+        d_items = Dict(k => get_inventoryitems(token_tim,team_id,d_inventories[k]) for k in keys(d_inventories))
+
+        inventory_id = ""
+        item_id = ""
+        for k in keys(d_inventories)
+            if try d_items[k][sample] catch end !== nothing
+                inventory_id = d_inventories[k]
+                item_id      = d_items[k][sample]
+            end
+        end
+
+        if isempty(inventory_id) || isempty(item_id)
+            error("There are no samples with the name $sample. Please create it.")
+        end
+
+        d_header_columns = get_inventorycolumns(token_tim,team_id,inventory_id)
+        d_item_columns = get_itemcolumns(token_tim,team_id,inventory_id,item_id)
+
+        ## Construct a DataFrame for the sample. The columns names are fetched from d_header_columns the text is fetched from d_item_columns
+        df = DataFrame(:Sample => sample)
+        for k in keys(d_header_columns)
+           df[!,k] = [try d_item_columns[tryparse(Int,d_header_columns[k])] catch e e="Not specified" end]
+        end
+        return df  
+    end
+end
+
+
+
+
 """
     list_experiments()
 Lists all experiment in the group Femto Lab.
@@ -194,9 +321,13 @@ e.g. list_steps("Alkanethiols")
 function list_tasks(experiment::AbstractString)
     if api_running() == true
         token_tim = token()["access_token"]
-        experiment_id  = try get_experiments(token_tim,team_id,project_id_femto_lab)[experiment] catch end
+        experiments  = get_experiments(token_tim,team_id,project_id_femto_lab)
+        experiment_id = try experiments[experiment] catch end
         if experiment_id === nothing
-            error("$(experiment) was not found. Try list_experiments() to see all available experiments on Titus.")
+            k_experiments = experiments |> keys |> collect
+            most_prob_idx = [Levenshtein()(experiment,_experiment) for _experiment in k_experiments] |> argmin
+            most_prob = k_experiments[most_prob_idx]
+            error(""" Experiment "$(experiment)" was not found. Did you mean "$(most_prob)"? Try list_experiments() to see all available experiments on Titus.""")
         end
         tasks = get_tasks(token_tim,team_id,project_id_femto_lab,experiment_id) |> keys |> collect |> sort
         sleep(1)
@@ -212,13 +343,21 @@ e.g. list_steps("Alkanethiols","HDT_01")
 function list_steps(experiment::AbstractString,task::AbstractString)
     if api_running() == true
         token_tim = token()["access_token"]
-        experiment_id  = try get_experiments(token_tim,team_id,project_id_femto_lab)[experiment] catch end
+        experiments  = get_experiments(token_tim,team_id,project_id_femto_lab)
+        experiment_id = try experiments[experiment] catch end
         if experiment_id === nothing
-            error("$(experiment) was not found. Try list_experiments() to see all available experiments on Titus.")
+            k_experiments = experiments |> keys |> collect
+            most_prob_idx = [Levenshtein()(experiment,_experiment) for _experiment in k_experiments] |> argmin
+            most_prob = k_experiments[most_prob_idx]
+            error(""" Experiment "$(experiment)" was not found. Did you mean "$(most_prob)"? Try list_experiments() to see all available experiments on Titus.""")
         end
-        task_id = try get_tasks(token_tim,team_id,project_id_femto_lab,experiment_id)[task] catch end
-        if experiment_id === nothing
-            error("$(task) was not found. Try list_tasks(experiment) to see all available tasks in given experiment on Titus.")
+        tasks = get_tasks(token_tim,team_id,project_id_femto_lab,experiment_id)
+        task_id = try tasks[task] catch end
+        if task_id === nothing
+            k_tasks = tasks |> keys |> collect 
+            most_prob_idx = [Levenshtein()(task,_task) for _task in k_tasks] |> argmin
+            most_prob = k_tasks[most_prob_idx]
+            error(""" Task $(task) was not found. Did you mean "$(most_prob)"? Try list_tasks("$experiment") to see all available tasks in given experiment on Titus.""")
         end
         protocol_id = get_protocols(token_tim,team_id,project_id_femto_lab,experiment_id,task_id)[1]
         steps    = get_steps(token_tim,team_id,project_id_femto_lab,experiment_id,task_id,protocol_id) |> keys |> collect |> sort

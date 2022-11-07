@@ -41,8 +41,12 @@ export  SFSpectrum,
         list_experiments,
         list_tasks,
         list_steps,
+        list_inventories,
+        list_items,
+        get_sample,
         post_step,
         post_plot,
-        get_comment
+        get_comment,
+        get_timestamp
         # save_mat
 end

@@ -52,6 +52,15 @@ function get_comment(s::SFSpectrum)
     return comment
 end
 
+function get_timestamp(s::SFSpectrum)
+    timestamp = get_metadata(s)["timestamp"]
+
+    if typeof(timestamp) <: Vector
+        timestamp = timestamp[1]
+    end
+    return timestamp
+end
+
 function get_pol_comb(s::SFSpectrum)
 
     comment = get_comment(s)
