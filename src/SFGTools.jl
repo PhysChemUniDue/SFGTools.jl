@@ -7,7 +7,6 @@ using DataFrames
 include("sfspectrum.jl")
 include("spectraio.jl")
 include("processing.jl")
-include("./scinote.jl")
 include("get_polarisationcomb.jl")
 
 const N_PIXEL = 512
@@ -38,14 +37,6 @@ export  SFSpectrum,
         failed_sifs,
         check_sif_files,
         get_pol_comb,
-        list_experiments,
-        list_tasks,
-        list_steps,
-        list_inventories,
-        list_items,
-        get_sample,
-        post_step,
-        post_plot,
         get_comment,
         get_timestamp
         # save_mat
