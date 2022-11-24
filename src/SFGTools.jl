@@ -38,6 +38,7 @@ export  SFSpectrum,
         check_sif_files,
         get_pol_comb,
         get_comment,
-        get_timestamp
+        get_timestamp,
+        nr_delay
         # save_mat
 end
