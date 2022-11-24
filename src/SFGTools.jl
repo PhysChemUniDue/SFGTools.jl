@@ -8,6 +8,7 @@ include("sfspectrum.jl")
 include("spectraio.jl")
 include("processing.jl")
 include("get_polarisationcomb.jl")
+include("nr_delay.jl")
 
 const N_PIXEL = 512
 const VIS_WAVELENGTH = 513.3  # After Ethalon - October 2022
