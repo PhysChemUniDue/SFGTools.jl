@@ -244,10 +244,10 @@ function save_dl_scan( sample::AbstractString, measurement::AbstractString,polar
     ekspla_wavenumber = round(10^7 / ekspla_wavelength, digits=2)
     
     h5open(save_path, "w") do fid
-        g0 = g_create(fid, sample)
-        g1 = g_create(g0, surface_density)
-        g2 = g_create(g1, polarisation_comb)
-        g3 = g_create(g2, scan_type)
+        g0 = create_group(fid, sample)
+        g1 = create_group(g0, surface_density)
+        g2 = create_group(g1, polarisation_comb)
+        g3 = create_group(g2, scan_type)
         
 
 
@@ -260,10 +260,10 @@ function save_dl_scan( sample::AbstractString, measurement::AbstractString,polar
             else
                 
 
-                g4 = g_create(g3, pump_resonance)
-                g5 = g_create(g4, dashboard_date)
+                g4 = create_group(g3, pump_resonance)
+                g5 = create_group(g4, dashboard_date)
             
-                g6 = g_create(g5, "Data")
+                g6 = create_group(g5, "Data")
                 g6["sig_matrix"] = sigmatrix
                 g6["ref_matrix"] = refmatrix
                 g6["pump_wavenumber"] = ekspla_wavenumber
