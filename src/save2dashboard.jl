@@ -205,11 +205,9 @@ function save_dl_scan( sample::AbstractString, measurement::AbstractString,polar
 
     # Check if date has the right type
     if typeof(date) == String
-        directory = date * "/" * foldername
         dashboard_date = date
     elseif  typeof(date) !== String 
         dashboard_date = date2dashboard(date)
-        directory = dashboard_date * "/" * foldername
     elseif length(date) !== 8
         error("$date has not the type  yyyymmdd")
     end
@@ -223,7 +221,10 @@ function save_dl_scan( sample::AbstractString, measurement::AbstractString,polar
     # File Name and Save Path
     filename = sample*"-"*measurement*".h5"
     if save_path !== "./" 
-    save_path = projectdir("data/exp_pro/Spectroscopy/sample/$filename")
+    foldername = projectdir("data/exp_pro/Spectroscopy/$sample")
+    save_path = joinpath(foldername,filename)
+    if isdir(folder_name) !== false
+        mkdir(foldername)
     end
 
 
