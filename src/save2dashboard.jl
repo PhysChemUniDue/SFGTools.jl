@@ -1,4 +1,4 @@
-using Dates,HDF5 
+using Dates,HDF5,Statistics
 """ 
 Convert a date (yyyy,mm,dd) of type Tuple{Int64,Int64,Int64} to a yyyymmdd string.
 """
@@ -197,8 +197,8 @@ function save_dl_scan( sample::AbstractString, measurement::AbstractString,polar
                     probe_wavenumbers = Main.ν, 
                     delay_time = Main.dltime_sorted,
                     mode_name = Main.mode_name, 
-                    sig_bleaches = [mean(Main.sig03[:,Main.pixel[i]], dims=2)[:] for i in 1:eachindex(Main.mode_name)],
-                    ref_bleaches = [mean(Main.ref03[:,Main.pixel[i]], dims=2)[:] for i in 1:eachindex(Main.mode_name)],
+                    sig_bleaches = [mean(Main.sig03[:,Main.pixel[i]], dims=2)[:] for i in 1:length(Main.mode_name)],
+                    ref_bleaches = [mean(Main.ref03[:,Main.pixel[i]], dims=2)[:] for i in 1:length(Main.mode_name)],
                     add_comment= "",
                     save_path= nothing
         )
@@ -227,7 +227,7 @@ function save_dl_scan( sample::AbstractString, measurement::AbstractString,polar
     # File Name and Save Path
     filename = sample*"-"*measurement*".h5"
 
-    if save_path == nothing 
+    if save_path === nothing 
         foldername = projectdir("data/exp_pro/Spectroscopy/$sample")
         if isdir(folder_name) !== false
             mkdir(foldername)
@@ -247,25 +247,23 @@ function save_dl_scan( sample::AbstractString, measurement::AbstractString,polar
         error("""Usually we only pump d⁻ and r⁻. If you want to pump something else set the kwarg "pump_resonance" """)
     end
     ekspla_wavenumber = round(10^7 / ekspla_wavelength, digits=2)
-    println("check")  
     
     h5open(save_path, "w") do fid
         g0 = create_group(fid, sample)
         g1 = create_group(g0, surface_density)
         g2 = create_group(g1, polarisation_comb)
         g3 = create_group(g2, scan_type)
-        println("check1")  
         
 
 
-            #if first(size(sigmatrix)) !== first(size(delay_time))
-            #    error("Dimensions of sigmatrix and delay_time must match!!\nYou got $(first(size(sigmatrix)))-elements in sigmatrix and $(first(size(delay_time)))-elements in delay_time! ")
-            #elseif last(size(sigmatrix)) !== first(size(probe_wavenumbers))
-            #    error("Dimensions of sigmatrix and probe_wavenumbers must match!!\nYou got $(last(size(sigmatrix)))-elements in sigmatrix and $(first(size(probe_wavenumbers)))-elements in probe_wavenumbers!")
-            #elseif first(size(sig_bleaches[1])) !== first(size(delay_time))
-            #    error("Dimensions of sig_bleaches[i] and delay_time must match!!\nYou got $(first(size(sig_bleaches[1])))-elements in sig_bleaches[i] and $(first(size(delay_time)))-elements in delay_time! ")
-            #else
-              println("check")  
+            if first(size(sigmatrix)) !== first(size(delay_time))
+                error("Dimensions of sigmatrix and delay_time must match!!\nYou got $(first(size(sigmatrix)))-elements in sigmatrix and $(first(size(delay_time)))-elements in delay_time! ")
+            elseif last(size(sigmatrix)) !== first(size(probe_wavenumbers))
+                error("Dimensions of sigmatrix and probe_wavenumbers must match!!\nYou got $(last(size(sigmatrix)))-elements in sigmatrix and $(first(size(probe_wavenumbers)))-elements in probe_wavenumbers!")
+            elseif first(size(sig_bleaches[1])) !== first(size(delay_time))
+                error("Dimensions of sig_bleaches[i] and delay_time must match!!\nYou got $(first(size(sig_bleaches[1])))-elements in sig_bleaches[i] and $(first(size(delay_time)))-elements in delay_time! ")
+            else
+              
 
                 g4 = create_group(g3, pump_resonance)
                 g5 = create_group(g4, dashboard_date)
@@ -277,15 +275,111 @@ function save_dl_scan( sample::AbstractString, measurement::AbstractString,polar
                 g6["wavenumber"] = probe_wavenumbers
                 g6["dltime"] = delay_time
             
-                for i in 1:eachindex(mode_name)
+                for i in 1:length(mode_name)
                     g6["sig_mean_$(mode_name[i])"] = sig_bleaches[i]
                 end
 
-                for i in 1:eachindex(mode_name)
+                for i in 1:length(mode_name)
                     g6["ref_mean_$(mode_name[i])"] = ref_bleaches[i]
                 end
 
-                g6["comment"] = get_metadata(raw_spectra[1])["comment"][1]*add_comment
-            #end
+                g6["comment"] = get_comment(raw_spectra[1])*add_comment
+            end
     end
+end
+
+
+function save_dl_scan2( sample::AbstractString, measurement::AbstractString,polarisation_comb::AbstractString;
+    v_surface_density::AbstractString = "SAM",
+    date = Main.date, 
+    pump_resonance::AbstractString = "" ,
+    raw_spectra = Main.raw, 
+    sigmatrix = Main.sig03, 
+    refmatrix = Main.ref03, 
+    probe_wavenumbers = Main.ν, 
+    delay_time = Main.dltime_sorted,
+    mode_name = Main.mode_name, 
+    sig_bleaches = [mean(Main.sig03[:,Main.pixel[i]], dims=2)[:] for i in 1:length(Main.mode_name)],
+    ref_bleaches = [mean(Main.ref03[:,Main.pixel[i]], dims=2)[:] for i in 1:length(Main.mode_name)],
+    add_comment= "",
+    save_path= nothing
+)
+
+
+#Scan Type
+scan_type = "delay_scan"
+
+# Check if date has the right type
+if typeof(date) == String
+dashboard_date = date
+elseif  typeof(date) !== String 
+dashboard_date = date2dashboard(date)
+elseif length(date) !== 8
+error("$date has not the type  yyyymmdd")
+end
+
+# sample surface density
+
+if v_surface_density == "SAM"
+surface_density = "SAM"
+else
+surface_density = "$surface_density_value mNm⁻¹"
+end
+
+# File Name and Save Path
+filename = sample*"-"*measurement*".h5"
+
+if save_path === nothing 
+foldername = projectdir("data/exp_pro/Spectroscopy/$sample")
+if isdir(folder_name) !== false
+mkdir(foldername)
+end
+save_path = joinpath(foldername,filename)
+end
+
+
+
+# calculate pump wavenumber (Ekspla) for delay scan 
+ekspla_wavelength = get_metadata(raw_spectra[1])["ekspla laser"]["ekspla wavelength"][1]
+if ekspla_wavelength == 3420
+pump_resonance = "d⁻pumped"
+elseif ekspla_wavelength == 3378
+pump_resonance = "r⁻pumped"
+else
+error("""Usually we only pump d⁻ and r⁻. If you want to pump something else set the kwarg "pump_resonance" """)
+end
+ekspla_wavenumber = round(10^7 / ekspla_wavelength, digits=2)
+
+h5open(save_path, "w") do fid
+g0 = create_group(fid, "Data")
+attributes(g0)["sample"] sample, surface_density polarisation_comb scan_type pump_resonance dashboard_date comment
+
+
+
+if first(size(sigmatrix)) !== first(size(delay_time))
+error("Dimensions of sigmatrix and delay_time must match!!\nYou got $(first(size(sigmatrix)))-elements in sigmatrix and $(first(size(delay_time)))-elements in delay_time! ")
+elseif last(size(sigmatrix)) !== first(size(probe_wavenumbers))
+error("Dimensions of sigmatrix and probe_wavenumbers must match!!\nYou got $(last(size(sigmatrix)))-elements in sigmatrix and $(first(size(probe_wavenumbers)))-elements in probe_wavenumbers!")
+elseif first(size(sig_bleaches[1])) !== first(size(delay_time))
+error("Dimensions of sig_bleaches[i] and delay_time must match!!\nYou got $(first(size(sig_bleaches[1])))-elements in sig_bleaches[i] and $(first(size(delay_time)))-elements in delay_time! ")
+else
+
+
+g0["sig_matrix"] = sigmatrix
+g0["ref_matrix"] = refmatrix
+g0["pump_wavenumber"] = ekspla_wavenumber
+g0["wavenumber"] = probe_wavenumbers
+g0["dltime"] = delay_time
+
+for i in 1:length(mode_name)
+    g0["sig_mean_$(mode_name[i])"] = sig_bleaches[i]
+end
+
+for i in 1:length(mode_name)
+    g0["ref_mean_$(mode_name[i])"] = ref_bleaches[i]
+end
+
+
+end
+end
 end
