@@ -7,6 +7,12 @@ using DataFrames
 include("sfspectrum.jl")
 include("spectraio.jl")
 include("processing.jl")
+<<<<<<< Updated upstream
+=======
+include("get_polarisationcomb.jl")
+include("nr_delay.jl")
+incldue("save2dashboard.jl")
+>>>>>>> Stashed changes
 
 const N_PIXEL = 512
 const VIS_WAVELENGTH = 512.4  # According to service protocol of May 2018
@@ -32,6 +38,17 @@ export  SFSpectrum,
         pixelshift!,
         findpixelshift,
         savejson,
+<<<<<<< Updated upstream
         save_data
+=======
+        save_data,
+        failed_sifs,
+        check_sif_files,
+        get_pol_comb,
+        get_comment,
+        get_timestamp,
+        nr_delay,
+        save_dl_scan
+>>>>>>> Stashed changes
         # save_mat
 end

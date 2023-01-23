@@ -660,6 +660,7 @@ function savejson(path::String, spectra::Array{SFSpectrum{T,1},1}) where T
 
 end
 
+<<<<<<< Updated upstream
 """ 
 Convert a date (yyyy,mm,dd) of type Tuple{Int64,Int64,Int64} to a yyyymmdd string.
 """
@@ -794,11 +795,33 @@ function save_data( sample::String, surface_density_value::Int, polarisation_com
                 for i in 1:length(mode_name)
                     g6["sig_mean_$(mode_name[i])"] = sig_bleaches[i]
                 end
+=======
+"""
+Check a dir if .sif files are missing. If delete_dirs = true directories with missing .sif Files are removed
+    check_sif_files(dirlist; delete_dirs = false)
+"""
+function check_sif_files(dir)
+    xml_files = searchdir(dir,".xml")
+    sif_files = searchdir(dir,".sif")
 
-                for i in 1:length(mode_name)
-                    g6["ref_mean_$(mode_name[i])"] = ref_bleaches[i]
-                end
+    if length(xml_files) == length(sif_files)
+        return true
+    else
+        return false
+    end
+end
 
+    #function eq2one(array)
+    #        all(x->x==1,array)
+    #end
+      # compare if each xml file also has a matching sif file 
+        #compare_xml_sif =    occursin.(_xml_files,_sif_files)
+
+
+>>>>>>> Stashed changes
+
+
+<<<<<<< Updated upstream
                 g6["comment"] = get_metadata(raw_spectra[1])["comment"][1]*add_comment
                 g6["folder_name"] = directory
             end
@@ -845,6 +868,11 @@ end
 """
 Save Spectra in a Matlab file.
 """
+=======
+#"""
+#Save Spectra in a Matlab file.
+# """
+>>>>>>> Stashed changes
 # function save_mat(filename::AbstractString, s::SFSpectrum)
 #     save_mat(filename, SFSpectrum[s])
 # end
