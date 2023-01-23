@@ -221,7 +221,9 @@ function save_dl_scan( sample::AbstractString, measurement::AbstractString,polar
         
     # File Name and Save Path
     filename = sample*"-"*measurement*".h5"
-    save_path = projectdir("data/exp_pro/Spectroscopy/$filename")
+    if save_path !== "./" 
+    save_path = projectdir("data/exp_pro/Spectroscopy/sample/$filename")
+    end
 
 
     
