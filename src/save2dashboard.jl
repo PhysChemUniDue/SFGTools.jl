@@ -203,6 +203,10 @@ function save_dl_scan( sample::AbstractString, measurement::AbstractString,polar
                     save_path= nothing
         )
 
+
+    #Scan Type
+    scan_type = "delay_scan"
+
     # Check if date has the right type
     if typeof(date) == String
         dashboard_date = date
@@ -230,6 +234,9 @@ function save_dl_scan( sample::AbstractString, measurement::AbstractString,polar
         end
         save_path = joinpath(foldername,filename)
     end
+
+
+    
 
 
 
