@@ -200,7 +200,7 @@ function save_dl_scan( sample::AbstractString, measurement::AbstractString,polar
                     sig_bleaches = [mean(Main.sig03[:,Main.pixel[i]], dims=2)[:,1] for i in 1:length(Main.mode_name)],
                     ref_bleaches = [mean(Main.ref03[:,Main.pixel[i]], dims=2)[:,1] for i in 1:length(Main.mode_name)],
                     add_comment= "",
-                    save_path="./"
+                    save_path= nothing
         )
 
     # Check if date has the right type
@@ -220,12 +220,15 @@ function save_dl_scan( sample::AbstractString, measurement::AbstractString,polar
         
     # File Name and Save Path
     filename = sample*"-"*measurement*".h5"
-    if save_path !== "./" 
-    foldername = projectdir("data/exp_pro/Spectroscopy/$sample")
-    save_path = joinpath(foldername,filename)
-    if isdir(folder_name) !== false
-        mkdir(foldername)
+
+    if save_path == nothing 
+        foldername = projectdir("data/exp_pro/Spectroscopy/$sample")
+        if isdir(folder_name) !== false
+            mkdir(foldername)
+        end
+        save_path = joinpath(foldername,filename)
     end
+
 
 
     
@@ -276,7 +279,6 @@ function save_dl_scan( sample::AbstractString, measurement::AbstractString,polar
                 end
 
                 g6["comment"] = get_metadata(raw_spectra[1])["comment"][1]*add_comment
-                g6["folder_name"] = directory
             end
     end
 end
