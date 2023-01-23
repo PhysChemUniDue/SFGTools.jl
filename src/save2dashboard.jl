@@ -214,7 +214,9 @@ function save_dl_scan( sample::AbstractString, measurement::AbstractString,polar
 
     # sample surface density
 
-    if v_surface_density !== "SAM"
+    if v_surface_density == "SAM"
+        surface_density = "SAM"
+    else
         surface_density = "$surface_density_value mNm⁻¹"
     end
         
