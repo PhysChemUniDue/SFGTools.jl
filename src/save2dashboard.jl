@@ -199,7 +199,8 @@ function save_dl_scan( sample::AbstractString, measurement::AbstractString,polar
                     mode_name = Main.mode_name, 
                     sig_bleaches = [mean(Main.sig03[:,Main.pixel[i]], dims=2)[:,1] for i in 1:length(Main.mode_name)],
                     ref_bleaches = [mean(Main.ref03[:,Main.pixel[i]], dims=2)[:,1] for i in 1:length(Main.mode_name)],
-                    add_comment= ""
+                    add_comment= "",
+                    save_path="./"
         )
 
     # Check if date has the right type
