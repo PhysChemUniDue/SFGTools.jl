@@ -352,7 +352,7 @@ function save_dl_scan2( sample::AbstractString, measurement::AbstractString,pola
    
 
     # fetch some attributes
-    comment        = try get_comment(raw_spectra[1])       catch  y if isa(y,UndefVarError) "" end end
+    comment        = "N/A"#get_comment(raw_spectra[1])
     exposure_time  = try get_exposure_time(raw_spectra[1]) catch end
     time_delay     = try nr_delay(raw_spectra[1])          catch end
 
