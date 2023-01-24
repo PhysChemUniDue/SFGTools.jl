@@ -293,7 +293,7 @@ function save_dl_scan2( sample::AbstractString, measurement::AbstractString,pola
     v_surface_density::AbstractString = "SAM",
     date = Main.date, 
     pump_resonance::AbstractString = "" ,
-    raw_spectra = Main.raw, 
+    raw_spectra = try Main.raw catch end , 
     sigmatrix = Main.sig03, 
     refmatrix = Main.ref03, 
     probe_wavenumbers = Main.ν, 
@@ -340,20 +340,21 @@ function save_dl_scan2( sample::AbstractString, measurement::AbstractString,pola
 
 
     # calculate pump wavenumber (Ekspla) for delay scan 
-    ekspla_wavelength = get_metadata(raw_spectra[1])["ekspla laser"]["ekspla wavelength"][1]
+    ekspla_wavelength = try get_metadata(raw_spectra[1])["ekspla laser"]["ekspla wavelength"][1]
     if ekspla_wavelength == 3420
         pump_resonance = "d⁻pumped"
     elseif ekspla_wavelength == 3378
         pump_resonance = "r⁻pumped"
+    elseif ekspla_wavelength == nothing
     else
         error("""Usually we only pump d⁻ and r⁻. If you want to pump something else set the kwarg "pump_resonance" """)
     end
-    ekspla_wavenumber = round(10^7 / ekspla_wavelength, digits=2)
+   
 
     # fetch some attributes
-    comment        = get_comment(raw_spectra[1])
-    exposure_time  = get_exposure_time(raw_spectra[1])
-    time_delay     = 
+    comment        = try get_comment(raw_spectra[1])       catch end
+    exposure_time  = try get_exposure_time(raw_spectra[1]) catch end
+    time_delay     = try get_nr_delay(raw_spectra[1])      catch end
 
     h5open(save_path, "w") do fid
         g0 = create_group(fid, "Data")
