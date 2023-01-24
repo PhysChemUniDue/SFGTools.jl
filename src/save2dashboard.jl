@@ -354,7 +354,7 @@ function save_dl_scan2( sample::AbstractString, measurement::AbstractString,pola
     # fetch some attributes
     comment        = try get_comment(raw_spectra[1])       catch end
     exposure_time  = try get_exposure_time(raw_spectra[1]) catch end
-    time_delay     = try get_nr_delay(raw_spectra[1])      catch end
+    time_delay     = try nr_delay(raw_spectra[1])          catch end
 
     h5open(save_path, "w") do fid
         g0 = create_group(fid, "Data")
