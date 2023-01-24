@@ -349,6 +349,15 @@ function save_dl_scan2( sample::AbstractString, measurement::AbstractString,pola
     else
         error("""Usually we only pump d⁻ and r⁻. If you want to pump something else set the kwarg "pump_resonance" """)
     end
+    if ekspla_wavelength !== nothing
+        ekspla_wavenumber = round(10^7 / ekspla_wavelength, digits=2)
+    elseif pump_resonance = "d⁻pumped"
+        ekspla_wavenumber = 2923.98
+    elseif pump_resonance = "r⁻pumped"
+        ekspla_wavenumber = 2960.33
+    end
+
+
    
 
     # fetch some attributes
@@ -368,6 +377,7 @@ function save_dl_scan2( sample::AbstractString, measurement::AbstractString,pola
             attributes(g0)["comment"]                   = comment*add_comment
             attributes(g0)["exposure time"]             = "$(exposure_time) s"
             attributes(g0)["time delay"]                = "$(time_delay) ps"
+            attributes(g0)["pump_wavenumber"]           = ekspla_wavenumber
 
 
 
@@ -382,7 +392,6 @@ function save_dl_scan2( sample::AbstractString, measurement::AbstractString,pola
 
             g0["sig_matrix"] = sigmatrix
             g0["ref_matrix"] = refmatrix
-            g0["pump_wavenumber"] = ekspla_wavenumber
             g0["wavenumber"] = probe_wavenumbers
             g0["dltime"] = delay_time
 
