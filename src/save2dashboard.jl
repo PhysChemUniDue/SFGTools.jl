@@ -340,7 +340,7 @@ function save_dl_scan2( sample::AbstractString, measurement::AbstractString,pola
 
 
     # calculate pump wavenumber (Ekspla) for delay scan 
-    ekspla_wavelength = try get_metadata(raw_spectra[1])["ekspla laser"]["ekspla wavelength"][1]
+    ekspla_wavelength = try get_metadata(raw_spectra[1])["ekspla laser"]["ekspla wavelength"][1] catch end
     if ekspla_wavelength == 3420
         pump_resonance = "d⁻pumped"
     elseif ekspla_wavelength == 3378
