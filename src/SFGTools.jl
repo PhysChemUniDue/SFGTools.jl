@@ -42,6 +42,7 @@ export  SFSpectrum,
         get_comment,
         get_timestamp,
         nr_delay,
-        save_dl_scan
-        # save_mat
+        save_dl_scan,
+        save_dl_scan2,
+        get_exposure_time
 end

@@ -382,3 +382,17 @@ function dlpos2t(p)
     n = 125000.0
     p * l / (n * c) * 1e12
 end
+
+
+"""
+Return the exposure time of the CCD in s.
+"""
+function get_exposure_time(s::SFSpectrum)
+
+    t = get_metadata(s)["ixon"]["exposure_time"]
+
+    if typeof(t) <: Vector
+        t = t[1]
+    end
+    return t
+end

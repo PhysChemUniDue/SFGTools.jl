@@ -45,5 +45,5 @@ end
 date,raw, sig03,ref03, ν,dltime_sorted,mode_name,pixel = fk()
 
 save_path = "test/sampledata/exp_pro/ODT-006-006.h5"
-save_dl_scan("ODT-006","006","ssp",save_path=save_path)
+save_dl_scan2("ODT-006","006","ssp",save_path=save_path)
 
