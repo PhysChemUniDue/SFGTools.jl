@@ -346,7 +346,7 @@ function save_dl_scan2( sample::AbstractString, measurement::AbstractString,pola
     elseif ekspla_wavelength == 3378
         pump_resonance = "r⁻pumped"
     else
-        warn("""Usually we only pump d⁻ and r⁻. If you want to pump something else set the kwarg "pump_resonance" right. e.g. "r⁺pumped" or "d⁺pumped" """)
+        @warn("""Usually we only pump d⁻ and r⁻. If you want to pump something else set the kwarg "pump_resonance" right. e.g. "r⁺pumped" or "d⁺pumped" """)
     end
     if ekspla_wavelength !== nothing
         ekspla_wavenumber = round(10^7 / ekspla_wavelength, digits=2)
