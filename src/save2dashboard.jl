@@ -360,9 +360,13 @@ function save_dl_scan2( sample::AbstractString, measurement::AbstractString,pola
    
 
     # fetch some attributes
-    comment        = "N/A"#get_comment(raw_spectra[1])
-    exposure_time  = try get_exposure_time(raw_spectra[1]) catch end
-    time_delay     = try nr_delay(raw_spectra[1])          catch end
+    comment          = "N/A"#get_comment(raw_spectra[1])
+    exposure_time    = try get_exposure_time(raw_spectra[1]) catch end
+    time_delay       = try nr_delay(raw_spectra[1])          catch end
+    pump_power       = try [get_metadata(raw_spectra[i])["ir power meters"]["pump ir power"]["mean"] for i in 1:size(raw_spectra,1)] catch end
+    mean_pump_power  = try mean(pump_power) catch end
+    probe_power      = try [get_metadata(raw_spectra[i])["ir power meters"]["probe ir power"]["mean"] for i in 1:size(raw_spectra,1)] catch end
+    mean_probe_power = try mean(probe_power) catch end
 
     h5open(save_path, "w") do fid
         g0 = create_group(fid, "Data")
@@ -374,9 +378,12 @@ function save_dl_scan2( sample::AbstractString, measurement::AbstractString,pola
             attributes(g0)["pump resonance"]            = pump_resonance 
             attributes(g0)["date"]                      = dashboard_date 
             attributes(g0)["comment"]                   = comment*add_comment
-            attributes(g0)["exposure time"]             = "$(exposure_time) s"
-            attributes(g0)["time delay"]                = "$(time_delay) ps"
-            attributes(g0)["pump wavenumber"]           = ekspla_wavenumber
+            attributes(g0)["exposure time [s]"]         = exposure_time
+            attributes(g0)["time delay [ps]"]           = time_delay
+            attributes(g0)["pump wavenumber [cm⁻¹"]     = ekspla_wavenumber
+            attributes(g0)["mean pump power [mW]"]      = mean_pump_power
+            attributes(g0)["mean probe power [mW]"]     = mean_probe_power
+
 
 
 
@@ -389,17 +396,19 @@ function save_dl_scan2( sample::AbstractString, measurement::AbstractString,pola
         else
 
 
-            g0["sig_matrix"] = sigmatrix
-            g0["ref_matrix"] = refmatrix
+            g0["sig matrix"] = sigmatrix
+            g0["ref matrix"] = refmatrix
             g0["wavenumber"] = probe_wavenumbers
-            g0["dltime"] = delay_time
+            g0["dltime"]     = delay_time
+            g0["pump power"] = pump_power
+            g0["probe power"]= probe_power
 
             for i in 1:length(mode_name)
-                g0["sig_mean_$(mode_name[i])"] = sig_bleaches[i]
+                g0["mean sig bleach $(mode_name[i])"] = sig_bleaches[i]
             end
 
             for i in 1:length(mode_name)
-                g0["ref_mean_$(mode_name[i])"] = ref_bleaches[i]
+                g0["mean ref bleach $(mode_name[i])"] = ref_bleaches[i]
             end
 
 
