@@ -256,7 +256,7 @@ function save_dl_scan( sample::AbstractString, measurement::AbstractString;
 
     if save_path === nothing 
         foldername = projectdir("data/exp_pro/Spectroscopy/$sample")
-        if isdir(foldername) !== false
+        if isdir(foldername) == false
             mkdir(foldername)
         end
         save_path = joinpath(foldername,filename)
