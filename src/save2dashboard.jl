@@ -197,7 +197,7 @@ Example:\n
     save_dl_scan("ODT-001","001","ppp")\n
 
     save_dl_scan( sample::AbstractString, measurement::AbstractString;
-    polarisation_comb::AbstractString = get_pol_comb(raw[1]),
+    polarisation_comb::AbstractString = get_pol_comb(Main.raw[1]),
     v_surface_density::AbstractString = "SAM",
     date = Main.date, 
     pump_resonance::AbstractString = "" ,
@@ -214,7 +214,7 @@ Example:\n
 )
 """
 function save_dl_scan( sample::AbstractString, measurement::AbstractString;
-    polarisation_comb::AbstractString = get_pol_comb(raw[1]),
+    polarisation_comb::AbstractString = get_pol_comb(Main.raw[1]),
     v_surface_density::AbstractString = "SAM",
     date = Main.date, 
     pump_resonance::AbstractString = "" ,
