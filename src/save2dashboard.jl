@@ -1,4 +1,4 @@
-using Dates,HDF5,Statistics
+using Dates,HDF5,Statistics,DrWatson 
 """ 
 Convert a date (yyyy,mm,dd) of type Tuple{Int64,Int64,Int64} to a yyyymmdd string.
 """
@@ -196,7 +196,8 @@ Example:\n
 
     save_dl_scan("ODT-001","001","ppp")\n
 
-    save_dl_scan( sample::AbstractString, measurement::AbstractString,polarisation_comb::AbstractString;
+    save_dl_scan( sample::AbstractString, measurement::AbstractString;
+    polarisation_comb::AbstractString = get_pol_comb(raw[1]),
     v_surface_density::AbstractString = "SAM",
     date = Main.date, 
     pump_resonance::AbstractString = "" ,
@@ -212,7 +213,8 @@ Example:\n
     save_path= nothing
 )
 """
-function save_dl_scan( sample::AbstractString, measurement::AbstractString,polarisation_comb::AbstractString;
+function save_dl_scan( sample::AbstractString, measurement::AbstractString;
+    polarisation_comb::AbstractString = get_pol_comb(raw[1]),
     v_surface_density::AbstractString = "SAM",
     date = Main.date, 
     pump_resonance::AbstractString = "" ,
