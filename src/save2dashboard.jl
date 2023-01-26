@@ -327,7 +327,7 @@ function save_dl_scan2( sample::AbstractString, measurement::AbstractString,pola
     end
 
     # File Name and Save Path
-    filename = sample*"-"*measurement*".h5"
+    filename = "DL-"*sample*"-"*measurement*".h5"
 
     if save_path === nothing 
         foldername = projectdir("data/exp_pro/Spectroscopy/$sample")
@@ -364,9 +364,9 @@ function save_dl_scan2( sample::AbstractString, measurement::AbstractString,pola
     exposure_time    = try get_exposure_time(raw_spectra[1]) catch end
     time_delay       = try nr_delay(raw_spectra[1])          catch end
     pump_power       = try [get_metadata(raw_spectra[i])["ir power meters"]["pump ir power"]["mean"] for i in 1:size(raw_spectra,1)] catch end
-    mean_pump_power  = try mean(pump_power) catch end
+    mean_pump_power  = try mean(pump_power)*10 catch end
     probe_power      = try [get_metadata(raw_spectra[i])["ir power meters"]["probe ir power"]["mean"] for i in 1:size(raw_spectra,1)] catch end
-    mean_probe_power = try mean(probe_power) catch end
+    mean_probe_power = try mean(probe_power)*10 catch end
 
     h5open(save_path, "w") do fid
         g0 = create_group(fid, "Data")
@@ -381,8 +381,8 @@ function save_dl_scan2( sample::AbstractString, measurement::AbstractString,pola
             attributes(g0)["exposure time [s]"]         = exposure_time
             attributes(g0)["time delay [ps]"]           = time_delay
             attributes(g0)["pump wavenumber [cm⁻¹"]     = ekspla_wavenumber
-            attributes(g0)["mean pump power [mW]"]      = mean_pump_power
-            attributes(g0)["mean probe power [mW]"]     = mean_probe_power
+            attributes(g0)["mean pump power [mW]"]      = mean_pump_power .*10
+            attributes(g0)["mean probe power [mW]"]     = mean_probe_power .*10
 
 
 
