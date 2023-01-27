@@ -1,4 +1,4 @@
-using Dates,HDF5,Statistics,DrWatson 
+using Dates,HDF5,Statistics,DrWatson,Printf
 """ 
 Convert a date (yyyy,mm,dd) of type Tuple{Int64,Int64,Int64} to a yyyymmdd string.
 """
@@ -304,8 +304,8 @@ function save_dl_scan( sample::AbstractString, measurement::AbstractString;
             attributes(g0)["exposure time [s]"]         = exposure_time
             attributes(g0)["time delay [ps]"]           = time_delay
             attributes(g0)["pump wavenumber [cm⁻¹"]     = ekspla_wavenumber
-            attributes(g0)["mean pump power [mW]"]      = mean_pump_power .*10
-            attributes(g0)["mean probe power [mW]"]     = mean_probe_power .*10
+            attributes(g0)["mean pump power [mW]"]      = round(mean_pump_power *10, sigdigits=3)
+            attributes(g0)["mean probe power [mW]"]     = round(mean_probe_power *10, sigdigits=3)
 
 
 
@@ -334,6 +334,123 @@ function save_dl_scan( sample::AbstractString, measurement::AbstractString;
                 g0["mean ref bleach $(mode_name[i])"] = ref_bleaches[i]
             end
 
+
+        end
+    end
+end
+
+""" Save all spectra of sample in a HDF5 File. \n
+
+This function saves all spectra from data03. Make sure you loaded all measurements of the sample. The names in df.name[idx_raw] will the name of the measurement. Make sure this is right.
+
+Set the following kwargs if you dont want to save the default variables.
+
+Example:\n
+
+    save_dl_scan("ODT-001")\n
+
+    save_spectra( sample::AbstractString;
+    measurements = last.(Main.df.name[Main.idx_raw],3),
+    spectra = Main.data03,
+    v_surface_density::AbstractString = "SAM",
+    probe_wavenumbers = Main.ν,
+    save_path = nothing
+)
+"""
+function save_spectra( sample::AbstractString;
+    measurements = last.(Main.df.name[Main.idx_raw],3),
+    spectra = Main.data03,
+    v_surface_density::AbstractString = "SAM",
+    probe_wavenumbers = Main.ν,
+    save_path= nothing
+)
+    # Dimension check
+    if size(measurements,1) !== size(spectra,1) 
+        error("Dimension mismatch between measurement(n= $(size(measurements,1))) and spectra (n=$(size(spectra,1)))")
+    end
+
+    #Scan Type
+    scan_type = "spectrum"
+    
+    # fetch some attributes
+    dates               = String[]
+    probe_powers        = Float64[]
+    comments            = String[]   
+    exposure_times      = Float64[]
+    time_delays         = Float64[]
+    polarisation_combs  = String[]
+
+    for spectrum in spectra
+        if typeof(spectrum) <: Vector
+            date                =  replace(get_timestamp(spectrum[1])[1:10],"-" => "")
+            probe_power         = [get_metadata(spec)["ir power meters"]["probe ir power"]["mean"] for spec in spectrum] |> mean
+            comment             =  get_comment(spectrum[1])
+            exposure_time       =  get_exposure_time(spectrum[1]) 
+            time_delay          =  nr_delay(spectrum[1])
+            polarisation_comb   =  get_pol_comb(comment) 
+        else  
+            date                =  replace(get_timestamp(spectrum)[1:10],"-" => "")
+            probe_power         =  get_metadata(spectrum)
+            comment             =  get_comment(spectrum)
+            exposure_time       =  get_exposure_time(spectrum) 
+            time_delay          =  nr_delay(spectrum) 
+            polarisation_comb   =  get_pol_comb(comment) 
+        end     
+        push!(dates,date)
+        push!(probe_powers,probe_power)
+        push!(comments,comment)
+        push!(exposure_times,exposure_time)
+        push!(time_delays,time_delay)
+        push!(polarisation_combs,polarisation_comb)
+    end
+
+    # sample surface density
+    if v_surface_density == "SAM"
+        surface_density = "SAM"
+    else
+        surface_density = "$v_surface_density mNm⁻¹"
+    end
+
+    # filename and Save Path
+    filename = "S-"*sample*".h5"
+
+    if save_path === nothing 
+        foldername = projectdir("data/exp_pro/Spectroscopy/$sample")
+        if isdir(foldername) == false
+            mkdir(foldername)
+        end
+        save_path = joinpath(foldername,filename)
+    end
+
+    
+    #Save .h5 file
+
+    h5open(save_path, "w") do fid
+        for i in eachindex(measurements)
+            g0 = create_group(fid, "$(measurements[i])")
+
+                attributes(g0)["sample"]                    = sample
+                attributes(g0)["measurement"]               = measurements[i]
+                attributes(g0)["scan type"]                 = scan_type 
+                attributes(g0)["surface density"]           = surface_density
+                attributes(g0)["polarisation combination"]  = polarisation_combs[i]
+                attributes(g0)["date"]                      = dates[i] 
+                attributes(g0)["comment"]                   = comments[i]
+                attributes(g0)["exposure time [s]"]         = exposure_times[i]
+                attributes(g0)["time delay [ps]"]           = time_delays[i]
+                attributes(g0)["mean probe power [mW]"]     = round(probe_powers[i] *10, sigdigits=3)
+
+                if size(spectra[i],1) > 1 
+                    g1 = create_group(g0, "series")
+                    for j in eachindex(spectra[i])
+                        g1["spectrum $(@sprintf "%02i" j)"]= sum(spectra[i][j],dims=2)[:]
+                    end
+                else
+                    g0["spectrum"] = sum(spectra[i][1],dims=2)[:]
+                end
+
+                g0["wavenumber"]              = probe_wavenumbers
+                    
 
         end
     end

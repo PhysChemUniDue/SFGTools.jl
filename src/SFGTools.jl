@@ -9,7 +9,7 @@ include("spectraio.jl")
 include("processing.jl")
 include("get_polarisationcomb.jl")
 include("nr_delay.jl")
-include("save2dashboard.jl")
+include("save_measurements.jl")
 
 const N_PIXEL = 512
 const VIS_WAVELENGTH = 513.3  # After Ethalon - October 2022
@@ -43,6 +43,6 @@ export  SFSpectrum,
         get_timestamp,
         nr_delay,
         save_dl_scan,
-        save_dl_scan2,
-        get_exposure_time
+        get_exposure_time,
+        save_spectra
 end

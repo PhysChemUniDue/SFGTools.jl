@@ -2,6 +2,7 @@
 
 ### Documenter.jl ###
 docs/build
+test/
 
 ### Julia ###
 *.jl.cov
@@ -67,3 +68,4 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.gitignore.io/api/macos,julia,windows
+test/save_dl_scan.jl
