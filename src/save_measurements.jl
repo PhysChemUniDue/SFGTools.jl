@@ -218,7 +218,7 @@ function save_dl_scan( sample::AbstractString, measurement::AbstractString;
     v_surface_density::AbstractString = "SAM",
     date = Main.date, 
     pump_resonance::AbstractString = "" ,
-    raw_spectra = try Main.raw catch end , 
+    raw_spectra = Main.raw, 
     sigmatrix = Main.sig03, 
     refmatrix = Main.ref03, 
     probe_wavenumbers = Main.ν, 
@@ -281,7 +281,7 @@ function save_dl_scan( sample::AbstractString, measurement::AbstractString;
    
 
     # fetch some attributes
-    comment          = "N/A"#get_comment(raw_spectra[1])
+    comment          = get_comment(raw_spectra[1])
     exposure_time    = get_exposure_time(raw_spectra[1]) 
     time_delay       = nr_delay(raw_spectra[1])          
     pump_power       = [get_metadata(raw_spectra[i])["ir power meters"]["pump ir power"]["mean"] for i in 1:size(raw_spectra,1)] 
@@ -303,7 +303,7 @@ function save_dl_scan( sample::AbstractString, measurement::AbstractString;
             attributes(g0)["comment"]                   = comment*add_comment
             attributes(g0)["exposure time [s]"]         = exposure_time
             attributes(g0)["time delay [ps]"]           = time_delay
-            attributes(g0)["pump wavenumber [cm⁻¹"]     = ekspla_wavenumber
+            attributes(g0)["pump wavenumber [cm⁻¹]"]     = ekspla_wavenumber
             attributes(g0)["mean pump power [mW]"]      = round(mean_pump_power *10, sigdigits=3)
             attributes(g0)["mean probe power [mW]"]     = round(mean_probe_power *10, sigdigits=3)
 
@@ -451,6 +451,139 @@ function save_spectra( sample::AbstractString;
 
                 g0["wavenumber"]              = probe_wavenumbers
                     
+
+        end
+    end
+end
+
+
+""" Save the wl scan in a HDF5 File. \n
+
+Set the following kwargs if you dont want to save the default variables.
+
+Example:\n
+
+    save_wl_scan("ODT-001","001","ppp")\n
+
+    save_wl_scan( sample::AbstractString, measurement::AbstractString;
+    polarisation_comb::AbstractString = get_pol_comb(Main.raw[1]),
+    v_surface_density::AbstractString = "SAM",
+    date = Main.date, 
+    raw_spectra = Main.raw, 
+    sigmatrix = Main.sig03, 
+    refmatrix = Main.ref03, 
+    probe_wavenumbers = Main.ν, 
+    pump_wavenumbers = Main.ekspla_WN,
+    mode_name = Main.mode_name, 
+    sig_bleaches = [mean(Main.sig03[:,Main.pixel[i]], dims=2)[:] for i in 1:length(Main.mode_name)],
+    ref_bleaches = [mean(Main.ref03[:,Main.pixel[i]], dims=2)[:] for i in 1:length(Main.mode_name)],
+    add_comment= "",
+    save_path= nothing
+)
+)
+"""
+function save_wl_scan( sample::AbstractString, measurement::AbstractString;
+    polarisation_comb::AbstractString = get_pol_comb(Main.raw[1]),
+    v_surface_density::AbstractString = "SAM",
+    date = Main.date, 
+    raw_spectra = Main.raw, 
+    sigmatrix = Main.sig03, 
+    refmatrix = Main.ref03, 
+    probe_wavenumbers = Main.ν, 
+    pump_wavenumbers = Main.ekspla_WN,
+    mode_name = Main.mode_name, 
+    sig_bleaches = [mean(Main.sig03[:,Main.pixel[i]], dims=2)[:] for i in 1:length(Main.mode_name)],
+    ref_bleaches = [mean(Main.ref03[:,Main.pixel[i]], dims=2)[:] for i in 1:length(Main.mode_name)],
+    add_comment= "",
+    save_path= nothing
+)
+
+
+    #Scan Type
+    scan_type = "wavenumber_scan"
+
+    # Check if date has the right type
+    if typeof(date) == String
+        dashboard_date = date
+    elseif  typeof(date) !== String 
+        dashboard_date = date2dashboard(date)
+    elseif length(date) !== 8
+        error("$date has not the type  yyyymmdd")
+    end
+
+    # sample surface density
+
+    if v_surface_density == "SAM"
+        surface_density = "SAM"
+    else
+        surface_density = "$v_surface_density mNm⁻¹"
+    end
+
+    # File Name and Save Path
+    filename = "WL-"*sample*"-"*measurement*".h5"
+
+    if save_path === nothing 
+        foldername = projectdir("data/exp_pro/Spectroscopy/$sample")
+        if isdir(foldername) == false
+            mkdir(foldername)
+        end
+        save_path = joinpath(foldername,filename)
+    end
+
+   
+
+    # fetch some attributes
+    comment          = get_comment(raw_spectra[1])
+    exposure_time    = get_exposure_time(raw_spectra[1]) 
+    probe_time_delay = nr_delay(raw_spectra[1])          
+    pump_power       = [get_metadata(raw_spectra[i])["ir power meters"]["pump ir power"]["mean"] for i in 1:size(raw_spectra,1)] 
+    mean_pump_power  = mean(pump_power)*10
+    probe_power      = [get_metadata(raw_spectra[i])["ir power meters"]["probe ir power"]["mean"] for i in 1:size(raw_spectra,1)]
+    mean_probe_power = mean(probe_power)*10 
+
+    #Save .h5 file
+
+    h5open(save_path, "w") do fid
+        g0 = create_group(fid, "Data")
+            attributes(g0)["sample"]                    = sample
+            attributes(g0)["measurement"]               = measurement
+            attributes(g0)["scan type"]                 = scan_type 
+            attributes(g0)["surface density"]           = surface_density
+            attributes(g0)["polarisation combination"]  = polarisation_comb 
+            attributes(g0)["date"]                      = dashboard_date 
+            attributes(g0)["comment"]                   = comment*add_comment
+            attributes(g0)["exposure time [s]"]         = exposure_time
+            attributes(g0)["probe time delay [ps]"]     = probe_time_delay
+            attributes(g0)["mean pump power [mW]"]      = round(mean_pump_power *10, sigdigits=3)
+            attributes(g0)["mean probe power [mW]"]     = round(mean_probe_power *10, sigdigits=3)
+
+
+
+
+        if first(size(sigmatrix)) !== first(size(pump_wavenumbers))
+            error("Dimensions of sigmatrix and pump_wavenumbers must match!!\nYou got $(first(size(sigmatrix)))-elements in sigmatrix and $(first(size(pump_wavenumbers)))-elements in pump_wavenumbers ")
+        elseif last(size(sigmatrix)) !== first(size(probe_wavenumbers))
+            error("Dimensions of sigmatrix and probe_wavenumbers must match!!\nYou got $(last(size(sigmatrix)))-elements in sigmatrix and $(first(size(probe_wavenumbers)))-elements in probe_wavenumbers!")
+        elseif first(size(sig_bleaches[1])) !== first(size(pump_wavenumbers))
+            error("Dimensions of sig_bleaches[i] and pump_wavenumbers must match!!\nYou got $(first(size(sig_bleaches[1])))-elements in sig_bleaches[i] and $(first(size(pump_wavenumbers)))-elements in pump_wavenumbers ")
+        else
+
+
+            g0["sig matrix"]           = sigmatrix
+            g0["ref matrix"]           = refmatrix
+            g0["wavenumber"]           = probe_wavenumbers
+            g0["pump wavenumbers"]     = pump_wavenumbers
+            g0["pump power"]           = pump_power
+            g0["probe power"]          = probe_power
+
+            for i in 1:length(mode_name)
+                g0["mean sig bleach $(mode_name[i])"] = sig_bleaches[i]
+            end
+
+            for i in 1:length(mode_name)
+                g0["mean ref bleach $(mode_name[i])"] = ref_bleaches[i]
+            end
+
 
         end
     end

@@ -44,5 +44,6 @@ export  SFSpectrum,
         nr_delay,
         save_dl_scan,
         get_exposure_time,
-        save_spectra
+        save_spectra,
+        save_wl_scan
 end
