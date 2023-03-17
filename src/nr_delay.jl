@@ -13,11 +13,14 @@ function nr_delay(s::SFSpectrum;t0 = nothing)
     comment = get_comment(s)
     r_time_zero_probe = r"time\s*zero\s*probe\s*=\s*(\d{5})" 
     matched = match(r_time_zero_probe,comment)
-    if matched === nothing
-        delay = "No time zero in comments"
-        return delay
+    if matched === nothing && t0 === nothing
+        error("No time zero in comments. Add the kwarg t0 to use the function.")
     end
-    time_zero_probe = tryparse(Int,matched.captures[1])
+    if matched === nothing 
+        time_zero_probe = t0
+    else
+        time_zero_probe = tryparse(Int,matched.captures[1])
+    end
     xpos = get_metadata(s)["smc stages"]["xpos"] |> Float64
     if t0 !== nothing
         delay = (t0 - xpos) * sec_per_step *1e12 # time delay in ps
