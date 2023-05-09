@@ -438,13 +438,16 @@ function save_spectra( sample::AbstractString;
                 if size(spectra[i],1) > 1 
                     g1 = create_group(g0, "series")
                     for j in eachindex(spectra[i])
-                        g1["spectrum $(@sprintf "%02i" j)"]= sum(spectra[i][j],dims=2)[:]
-                        attributes(g1)["time delay [ps]"]           = nr_delay(spectra[i][j])
+                        g1["spectrum $(@sprintf "%02i" j)"]                                = sum(spectra[i][j],dims=2)[:]
+                        attributes(g1["spectrum $(@sprintf "%02i" j)"])["time delay [ps]"] = nr_delay(spectra[i][j])
 
                     end
                 else
                     g0["spectrum"] = sum(spectra[i][1],dims=2)[:]
                     attributes(g0)["time delay [ps]"]           = nr_delay(spectra[i][1])
+
+
+
                 end
 
                 g0["wavenumber"]              = probe_wavenumbers
