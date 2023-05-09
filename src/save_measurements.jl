@@ -377,7 +377,6 @@ function save_spectra( sample::AbstractString;
     probe_powers        = Float64[]
     comments            = String[]   
     exposure_times      = Float64[]
-    time_delays         = Float64[]
     polarisation_combs  = String[]
 
     for spectrum in spectra
@@ -386,21 +385,18 @@ function save_spectra( sample::AbstractString;
             probe_power         = [get_metadata(spec)["ir power meters"]["probe ir power"]["mean"] for spec in spectrum] |> mean
             comment             =  get_comment(spectrum[1])
             exposure_time       =  get_exposure_time(spectrum[1]) 
-            time_delay          =  nr_delay(spectrum[1])
             polarisation_comb   =  get_pol_comb(comment) 
         else  
             date                =  replace(get_timestamp(spectrum)[1:10],"-" => "")
             probe_power         =  get_metadata(spectrum)
             comment             =  get_comment(spectrum)
             exposure_time       =  get_exposure_time(spectrum) 
-            time_delay          =  nr_delay(spectrum) 
             polarisation_comb   =  get_pol_comb(comment) 
         end     
         push!(dates,date)
         push!(probe_powers,probe_power)
         push!(comments,comment)
         push!(exposure_times,exposure_time)
-        push!(time_delays,time_delay)
         push!(polarisation_combs,polarisation_comb)
     end
 
@@ -437,16 +433,18 @@ function save_spectra( sample::AbstractString;
                 attributes(g0)["date"]                      = dates[i] 
                 attributes(g0)["comment"]                   = comments[i]
                 attributes(g0)["exposure time [s]"]         = exposure_times[i]
-                attributes(g0)["time delay [ps]"]           = time_delays[i]
                 attributes(g0)["mean probe power [mW]"]     = round(probe_powers[i] *10, sigdigits=3)
 
                 if size(spectra[i],1) > 1 
                     g1 = create_group(g0, "series")
                     for j in eachindex(spectra[i])
                         g1["spectrum $(@sprintf "%02i" j)"]= sum(spectra[i][j],dims=2)[:]
+                        attributes(g1)["time delay [ps]"]           = nr_delay(spectra[i][j])
+
                     end
                 else
                     g0["spectrum"] = sum(spectra[i][1],dims=2)[:]
+                    attributes(g0)["time delay [ps]"]           = nr_delay(spectra[i][1])
                 end
 
                 g0["wavenumber"]              = probe_wavenumbers
