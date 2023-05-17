@@ -227,6 +227,7 @@ function save_dl_scan( sample::AbstractString, measurement::AbstractString;
     sig_bleaches = [mean(Main.sig03[:,Main.pixel[i]], dims=2)[:] for i in 1:length(Main.mode_name)],
     ref_bleaches = [mean(Main.ref03[:,Main.pixel[i]], dims=2)[:] for i in 1:length(Main.mode_name)],
     add_comment= "",
+    data01 = Main.data01,
     save_path= nothing
 )
 
@@ -332,6 +333,11 @@ function save_dl_scan( sample::AbstractString, measurement::AbstractString;
 
             for i in 1:length(mode_name)
                 g0["mean ref bleach $(mode_name[i])"] = ref_bleaches[i]
+            end
+
+            g1 = create_group(g0, "data01")
+            for i in eachindex(data01)
+                g1["delay pos $(@sprintf "%03i" i)"]                               =   data01[i][:]
             end
 
 
@@ -496,6 +502,7 @@ function save_wl_scan( sample::AbstractString, measurement::AbstractString;
     sig_bleaches = [mean(Main.sig03[:,Main.pixel[i]], dims=2)[:] for i in 1:length(Main.mode_name)],
     ref_bleaches = [mean(Main.ref03[:,Main.pixel[i]], dims=2)[:] for i in 1:length(Main.mode_name)],
     add_comment= "",
+    data01 = Main.data01,
     save_path= nothing
 )
 
@@ -585,6 +592,10 @@ function save_wl_scan( sample::AbstractString, measurement::AbstractString;
                 g0["mean ref bleach $(mode_name[i])"] = ref_bleaches[i]
             end
 
+            g1 = create_group(g0, "data01")
+            for i in eachindex(data01)
+                g1["wl pos $(@sprintf "%03i" i)"]         =   data01[i][:]
+            end
 
         end
     end
